@@ -1,8 +1,8 @@
-
+import React from 'react'
 
 export const metadata = {
-  title: 'MultaCheck - Analizador de Multas IA',
-  description: 'Detectá errores en tus multas de tránsito',
+  title: 'MultaCheck',
+  description: 'Análisis de multas con IA',
 }
 
 export default function RootLayout({
