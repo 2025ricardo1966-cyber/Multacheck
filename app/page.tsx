@@ -1,198 +1,179 @@
 "use client";
 import React, { useState, useRef } from 'react';
-import { Scale, Upload, Loader2, Check, FileText, Download, Lock, CheckCircle2, ShieldCheck, AlertCircle, Search, ArrowRight, Info } from 'lucide-react';
+import { Scale, Loader2, CheckCircle2, Search, ArrowRight, Info, FileText, Download, ShieldCheck } from 'lucide-react';
 
 export default function MultaCheck() {
-  const [step, setStep] = useState('input'); 
+  const [step, setStep] = useState('input'); // input, searching, found, analyzing, result
   const [patente, setPatente] = useState('');
-  const [jurisdiccion, setJurisdiccion] = useState(''); // Ahora es opcional
-  const [fileSelected, setFileSelected] = useState(null);
   const [progressText, setProgressText] = useState('');
-  const fileInputRef = useRef(null);
 
   const handleSearch = () => {
     if (!patente || patente.length < 6) return alert("Por favor, ingresá una patente válida.");
     setStep('searching');
     
-    // Si no elige jurisdicción, el sistema avisa que busca en TODO el país
-    const scope = jurisdiccion ? jurisdiccion : "todo el territorio nacional";
     const searchSteps = [
-      `Iniciando barrido en ${scope}...`,
-      "Consultando registros de CABA y PBA...",
+      "Iniciando rastreo nacional...",
+      "Cruzando datos CABA y PBA...",
       "Sincronizando con Córdoba y Santa Fe...",
-      "Verificando base de datos ANSV..."
+      "Finalizando barrido ANSV..."
     ];
 
     searchSteps.forEach((text, i) => {
-      setTimeout(() => setProgressText(text), i * 1000);
+      setTimeout(() => setProgressText(text), i * 900);
     });
-    setTimeout(() => setStep('found'), 4000);
+    setTimeout(() => setStep('found'), 3800);
   };
 
   const handleAutoAnalysis = () => {
     setStep('analyzing');
-    const analysisSteps = ["Cruzando datos con Ley 24.449...", "Revisando vigencia de cinemómetros...", "Evaluando plazos de notificación..."];
+    const analysisSteps = [
+      "Evaluando normativa 24.449...",
+      "Verificando cinemómetros...",
+      "Calculando viabilidad técnica..."
+    ];
+    
     analysisSteps.forEach((text, i) => {
-      setTimeout(() => setProgressText(text), i * 1200);
+      setTimeout(() => setProgressText(text), i * 1100);
     });
-    setTimeout(() => setStep('result'), 4000);
+    setTimeout(() => setStep('result'), 3500);
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+    <div className="min-h-screen bg-white text-slate-900 font-sans">
       <style jsx global>{`
         @import url('https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css');
-        .blur-text { filter: blur(5px); }
         @keyframes progress { 0% { width: 0%; } 100% { width: 100%; } }
-        .animate-progress-bar { animation: progress 4s linear forwards; }
+        .animate-progress-bar { animation: progress 3.5s linear forwards; }
       `}</style>
 
-      <nav className="bg-white border-b border-slate-200 py-4">
-        <div className="max-w-6xl mx-auto px-4 flex justify-between items-center">
+      {/* Header Minimalista */}
+      <nav className="border-b border-slate-100 py-6">
+        <div className="max-w-4xl mx-auto px-6 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <div className="bg-slate-800 p-1.5 rounded-lg"><Scale className="text-white w-6 h-6" /></div>
-            <span className="text-xl font-bold tracking-tight text-slate-800 uppercase italic">MultaCheck</span>
+            <Scale className="text-slate-900 w-6 h-6" />
+            <span className="text-xl font-black tracking-tighter uppercase">MultaCheck</span>
           </div>
-          <span className="bg-slate-100 text-slate-600 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">Central de Consultas Nacional</span>
+          <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <ShieldCheck size={14} className="text-emerald-500" /> Conexión Segura
+          </div>
         </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto pt-10 px-4 pb-20">
+      <main className="max-w-3xl mx-auto pt-16 px-6 pb-20">
         
+        {/* PASO 1: LA MAGIA COMIENZA AQUÍ */}
         {step === 'input' && (
-          <div className="animate-in fade-in duration-500 text-center">
-            <h1 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight text-slate-900 leading-none italic">
-              Evaluación Técnica de Infracciones
-            </h1>
-            <p className="text-lg text-slate-600 mb-10 max-w-2xl mx-auto font-medium leading-relaxed">
-              Centralizamos la búsqueda en registros municipales y nacionales para detectar errores de procedimiento y vicios de forma.
-            </p>
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="mb-12">
+              <h1 className="text-5xl font-black text-slate-900 mb-6 tracking-tighter leading-none italic">
+                Rastreo Nacional de Infracciones.
+              </h1>
+              <p className="text-xl text-slate-500 font-medium leading-relaxed">
+                Ingresá tu patente para centralizar todas tus multas pendientes en segundos. 
+              </p>
+            </div>
 
-            <div className="bg-white p-8 rounded-3xl shadow-2xl border border-slate-200 inline-block w-full text-left">
-              <div className="flex flex-col md:flex-row gap-4 mb-8">
-                <div className="flex-grow">
-                  <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-[0.2em]">Dominio / Patente</label>
-                  <input 
-                    type="text" 
-                    placeholder="AA123BB" 
-                    className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-2xl uppercase focus:ring-2 focus:ring-slate-400 transition-all outline-none"
-                    value={patente}
-                    onChange={(e) => setPatente(e.target.value)}
-                  />
-                </div>
-                <div className="md:w-1/3">
-                  <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-[0.2em]">Provincia (Opcional)</label>
-                  <select 
-                    className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-500 outline-none"
-                    value={jurisdiccion}
-                    onChange={(e) => setJurisdiccion(e.target.value)}
-                  >
-                    <option value="">Todas (Nacional)</option>
-                    <option value="CABA">CABA</option>
-                    <option value="PBA">Buenos Aires</option>
-                    <option value="Cordoba">Córdoba</option>
-                    <option value="SantaFe">Santa Fe</option>
-                  </select>
-                </div>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+                <Search className="h-7 w-7 text-slate-300 group-focus-within:text-slate-900 transition-colors" />
               </div>
-
+              <input 
+                type="text" 
+                placeholder="AA123BB" 
+                className="w-full pl-16 p-8 bg-slate-50 border-2 border-slate-100 rounded-3xl font-mono text-4xl uppercase focus:bg-white focus:border-slate-900 transition-all outline-none shadow-sm"
+                value={patente}
+                onChange={(e) => setPatente(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              />
               <button 
                 onClick={handleSearch}
-                className="w-full bg-slate-900 text-white py-6 rounded-2xl font-black text-xl hover:bg-black transition-all shadow-xl uppercase tracking-tighter italic"
+                className="w-full mt-6 bg-slate-900 text-white py-6 rounded-3xl font-black text-xl hover:bg-black transition-all shadow-2xl uppercase italic tracking-tighter flex items-center justify-center gap-3"
               >
-                Consultar Infracciones Gratis
+                Iniciar Búsqueda Automática <ArrowRight size={24} />
               </button>
-
-              <div className="mt-8 pt-8 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
-                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest italic">¿Ya tenés el acta física?</p>
-                <button 
-                  onClick={() => fileInputRef.current.click()}
-                  className="flex items-center gap-2 text-blue-600 font-bold text-sm hover:text-blue-800 transition-colors"
-                >
-                  <Upload size={16} /> Subir PDF o Imagen para análisis técnico
-                  <input type="file" ref={fileInputRef} onChange={(e) => setFileSelected(e.target.files[0])} className="hidden" />
-                </button>
-              </div>
             </div>
           </div>
         )}
 
-        {/* BUSCANDO */}
+        {/* PASO 2: BUSCANDO EN TODO EL PAÍS */}
         {step === 'searching' && (
-          <div className="text-center py-20 space-y-6 animate-in zoom-in duration-300">
-            <Loader2 className="h-16 w-16 text-slate-400 mx-auto animate-spin" />
-            <h3 className="text-xl font-black text-slate-700 uppercase tracking-[0.1em] italic">{progressText}</h3>
-            <p className="text-slate-400 text-sm">Estamos consolidando datos de múltiples juzgados de faltas.</p>
+          <div className="text-center py-20 space-y-8 animate-pulse">
+            <Loader2 className="h-20 w-20 text-slate-900 mx-auto animate-spin" />
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black text-slate-800 uppercase italic tracking-tight">{progressText}</h3>
+              <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.2em]">No cierres esta ventana</p>
+            </div>
           </div>
         )}
 
-        {/* RESULTADO DE BÚSQUEDA */}
+        {/* PASO 3: EL SEMÁFORO - DETECCIÓN Y AUTORIZACIÓN */}
         {step === 'found' && (
           <div className="animate-in zoom-in duration-500">
-            <div className="bg-white border border-slate-200 p-8 rounded-3xl shadow-2xl">
-               <h2 className="text-xl font-black text-slate-800 uppercase mb-6 flex items-center gap-2 italic">
-                 <Info className="text-blue-500" /> Registro de Infracción Detectado
-               </h2>
-               <div className="bg-slate-50 p-6 rounded-2xl mb-8 border border-slate-100">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm font-black italic">
-                    <div><p className="text-slate-400 uppercase text-[9px] mb-1 tracking-widest">Patente</p><p className="text-slate-900 text-lg uppercase">{patente}</p></div>
-                    <div><p className="text-slate-400 uppercase text-[9px] mb-1 tracking-widest">Total Actas</p><p className="text-slate-900 text-lg italic">01 Pendiente</p></div>
-                    <div><p className="text-slate-400 uppercase text-[9px] mb-1 tracking-widest">Jurisdicción</p><p className="text-slate-900 uppercase text-lg italic">{jurisdiccion || "CABA/PBA"}</p></div>
-                    <div><p className="text-slate-400 uppercase text-[9px] mb-1 tracking-widest">Estado</p><p className="text-amber-600 text-lg uppercase">Vencida</p></div>
-                  </div>
+            <div className="bg-slate-900 text-white p-10 rounded-[40px] shadow-2xl relative overflow-hidden">
+               <div className="relative z-10">
+                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-400 text-slate-900 text-[10px] font-black mb-6 uppercase tracking-widest">
+                   <Info size={14} /> Registro Detectado
+                 </div>
+                 <h2 className="text-4xl font-black mb-6 italic leading-none">Hemos encontrado una infracción pendiente.</h2>
+                 
+                 <div className="grid grid-cols-2 gap-8 mb-10 border-y border-white/10 py-8">
+                    <div><p className="text-slate-500 uppercase text-[10px] font-bold mb-1">Dominio</p><p className="text-2xl font-mono">{patente.toUpperCase()}</p></div>
+                    <div><p className="text-slate-500 uppercase text-[10px] font-bold mb-1">Jurisdicción</p><p className="text-2xl font-black italic uppercase">CABA / Nacional</p></div>
+                 </div>
+
+                 <p className="text-slate-400 mb-10 text-lg font-medium">
+                   ¿Estás dispuesto a realizar una evaluación técnica para verificar si el acta cumple con los requisitos legales de la Ley 24.449?
+                 </p>
+
+                 <button 
+                  onClick={handleAutoAnalysis}
+                  className="w-full bg-white text-slate-900 font-black py-6 rounded-3xl text-xl hover:bg-slate-100 transition-all flex items-center justify-center gap-3 uppercase italic"
+                 >
+                   Sí, iniciar evaluación técnica <ArrowRight />
+                 </button>
+                 <button onClick={() => setStep('input')} className="w-full mt-4 text-white/40 font-bold text-xs uppercase hover:text-white transition-colors">Cancelar</button>
                </div>
-               <p className="text-slate-500 mb-8 leading-relaxed font-medium italic border-l-4 border-blue-500 pl-4">
-                 Hemos detectado que el acta presenta inconsistencias técnicas preliminares según los estándares de la Ley Nacional de Tránsito.
-               </p>
-               <button 
-                onClick={handleAutoAnalysis}
-                className="w-full bg-blue-600 text-white font-black py-5 rounded-2xl text-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-100 uppercase italic tracking-tighter"
-                style={{backgroundColor: '#2563eb'}}
-               >
-                 Iniciar Evaluación de Viabilidad Técnica <ArrowRight />
-               </button>
             </div>
           </div>
         )}
 
-        {/* ANALIZANDO LEGALMENTE */}
+        {/* PASO 4: ANALIZANDO (MOMENTO TÉCNICO) */}
         {step === 'analyzing' && (
           <div className="text-center py-20 space-y-8">
             <Loader2 className="h-16 w-16 text-slate-300 mx-auto animate-spin" />
             <h3 className="text-xl font-black text-slate-400 uppercase tracking-widest italic">{progressText}</h3>
+            <div className="max-w-xs mx-auto h-1 bg-slate-100 rounded-full overflow-hidden">
+                <div className="bg-slate-900 h-full animate-progress-bar"></div>
+            </div>
           </div>
         )}
 
-        {/* VEREDICTO FINAL PROFESIONAL */}
+        {/* PASO 5: RESULTADO FINAL (DESPUÉS DEL SEMÁFORO) */}
         {step === 'result' && (
           <div className="space-y-6 animate-in slide-in-from-bottom duration-700">
-             <div className="bg-white p-10 rounded-3xl shadow-xl border-l-8 border-emerald-500">
-                <h2 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight italic">Diagnóstico Administrativo Completado</h2>
-                <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black mb-6 tracking-widest uppercase">
-                  Viabilidad de Impugnación: PROBABLE
+             <div className="bg-white p-12 rounded-[40px] shadow-2xl border border-slate-100">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="bg-emerald-100 p-3 rounded-2xl"><CheckCircle2 className="text-emerald-600 w-8 h-8" /></div>
+                  <h2 className="text-4xl font-black text-slate-900 uppercase tracking-tighter italic">Viabilidad Técnica: ALTA</h2>
                 </div>
-                <div className="bg-slate-50 p-6 rounded-2xl border-l-2 border-slate-200">
-                  <p className="text-slate-700 leading-relaxed font-medium italic">
-                    "El acta analizada carece de la validación técnica semestral requerida para dispositivos cinemómetros (radares). Este vicio de forma permite fundamentar un descargo administrativo sólido."
-                  </p>
+                <p className="text-slate-500 text-xl leading-relaxed font-medium italic border-l-4 border-slate-900 pl-6 mb-10">
+                  "El acta presenta una inconsistencia en la calibración del dispositivo emisor. Existe fundamento técnico para una revisión administrativa."
+                </p>
+
+                <div className="bg-slate-900 p-8 rounded-3xl text-white flex flex-col md:flex-row justify-between items-center gap-6">
+                  <div className="text-center md:text-left">
+                    <h3 className="text-2xl font-black uppercase italic tracking-tight">Obtener Asistencia</h3>
+                    <p className="text-slate-400 text-sm">Descargá el borrador técnico para tu defensa.</p>
+                  </div>
+                  <button className="bg-white text-slate-900 px-8 py-4 rounded-2xl font-black uppercase hover:bg-slate-100 transition-all flex items-center gap-2">
+                    <FileText size={18} /> Generar Escrito
+                  </button>
                 </div>
              </div>
 
-             <div className="bg-slate-900 p-10 rounded-3xl text-white shadow-2xl flex flex-col md:flex-row justify-between items-center gap-8">
-                <div className="text-center md:text-left">
-                  <h3 className="text-2xl font-black mb-2 uppercase tracking-tight italic">Asistencia en Redacción</h3>
-                  <p className="text-slate-400 text-sm font-medium">Generamos tu escrito técnico personalizado listo para presentar ante el juzgado correspondiente.</p>
-                </div>
-                <button className="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black uppercase hover:bg-blue-500 transition-all flex items-center gap-3 shadow-2xl shadow-blue-900/40" style={{backgroundColor: '#2563eb'}}>
-                  <FileText size={20} /> Generar Escrito
-                </button>
-             </div>
-
-             <div className="bg-amber-50 border border-amber-100 p-6 rounded-2xl">
-               <p className="text-[10px] text-amber-700 text-center leading-relaxed font-black uppercase tracking-widest">
-                 Aviso Institucional: MultaCheck provee herramientas de asistencia técnica-administrativa. La resolución final queda sujeta exclusivamente al criterio de la autoridad de juzgamiento (Ley 24.449).
-               </p>
-             </div>
+             <p className="text-[10px] text-slate-300 text-center leading-relaxed font-bold uppercase tracking-widest px-10">
+               Nota: Este informe provee asistencia técnica-administrativa. La resolución final depende de la autoridad de juzgamiento competente.
+             </p>
           </div>
         )}
 
