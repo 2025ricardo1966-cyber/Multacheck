@@ -1,46 +1,33 @@
 "use client";
 import React, { useState } from 'react';
-import { Scale, Loader2, Users, ChevronRight, CheckCircle, MapPin, Globe, ShieldCheck, Search } from 'lucide-react';
+import { Scale, Users, ChevronRight, ShieldCheck, Search, ArrowLeft, FileText, Briefcase, Truck, CreditCard } from 'lucide-react';
 
 export default function MultaCheck() {
   const [step, setStep] = useState('input'); 
   const [patente, setPatente] = useState('');
-  
-  const provincias = [
-    "CABA", "Buenos Aires", "Córdoba", "Santa Fe", "Mendoza", 
-    "Salta", "Tucumán", "Neuquén", "Misiones", "Entre Ríos", "San Juan", "Chubut"
-  ];
+  const [selectedMulta, setSelectedMulta] = useState<any>(null);
 
+  // Simulación de multas detectadas
   const multasEncontradas = [
-    { id: 1, fecha: "10/01/2026", lugar: "CABA", monto: "$32.400", falta: "Exceso Velocidad (Radar Fijo)" },
-    { id: 2, fecha: "22/01/2026", lugar: "La Matanza, PBA", monto: "$85.400", falta: "Falta de VTV vigente" },
-    { id: 3, fecha: "05/02/2026", lugar: "Escobar, PBA", monto: "$42.100", falta: "Luces Bajas Reglamentarias" },
-    { id: 4, fecha: "15/02/2026", lugar: "Córdoba Capital", monto: "$91.200", falta: "Semáforo en Rojo (Cámara)" },
-    { id: 5, fecha: "02/03/2026", lugar: "Rosario, Santa Fe", monto: "$28.500", falta: "Mal Estacionamiento" },
-    { id: 6, fecha: "12/03/2026", lugar: "Salta (Cabra Corral)", monto: "$63.200", falta: "Exceso de Velocidad (Ruta 68)" },
-    { id: 7, fecha: "20/03/2026", lugar: "Mendoza City", monto: "$55.000", falta: "Giro prohibido en Avenida" },
-    { id: 10, fecha: "10/04/2026", lugar: "Mar del Plata, PBA", monto: "$77.300", falta: "Exceso Velocidad (Autovía 2)" }
+    { id: 1, fecha: "10/01/2026", lugar: "CABA", monto: "$32.400", falta: "Exceso Velocidad (Radar Fijo)", vicio: "Falta de Certificado de Homologación de cinemómetro actualizado.", exito: "85%" },
+    { id: 6, fecha: "12/03/2026", lugar: "Salta (Cabra Corral)", monto: "$63.200", falta: "Exceso de Velocidad (Ruta 68)", vicio: "Defecto en la imagen capturada: falta de visibilidad del dominio.", exito: "95%" }
   ];
-
-  const handleSearch = () => {
-    if (patente.length < 6) return alert("Por favor, ingresá una patente válida.");
-    setStep('evaluating');
-    setTimeout(() => setStep('results'), 2500);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSearch();
-  };
 
   return (
     <div style={{ backgroundColor: '#fdfbf7', minHeight: '100vh', color: '#1e293b', fontFamily: 'sans-serif' }}>
       
+      {/* Navbar con Acceso a Empresas */}
       <nav style={{ padding: '15px 30px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '900', fontSize: '18px', color: '#0f172a' }}>
           <Scale size={20} color="#2563eb" /> MULTACHECK
         </div>
-        <div style={{ fontSize: '11px', color: '#2563eb', border: '1px solid #bfdbfe', padding: '5px 12px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 'bold' }}>
-          <Users size={12} /> 1.240 CONSULTAS EN TIEMPO REAL
+        <div style={{ display: 'flex', gap: '15px' }}>
+          <button style={{ fontSize: '12px', color: '#64748b', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '600' }}>
+            ACCESO PROFESIONAL
+          </button>
+          <div style={{ fontSize: '11px', color: '#2563eb', border: '1px solid #bfdbfe', padding: '5px 12px', borderRadius: '20px', fontWeight: 'bold' }}>
+             2026 • SOPORTE FEDERAL
+          </div>
         </div>
       </nav>
 
@@ -48,83 +35,102 @@ export default function MultaCheck() {
         
         {step === 'input' && (
           <div style={{ textAlign: 'center' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: '#f1f5f9', padding: '8px 16px', borderRadius: '50px', fontSize: '12px', color: '#64748b', marginBottom: '20px', border: '1px solid #e2e8f0' }}>
-              <ShieldCheck size={14} color="#10b981" /> VALIDACIÓN JURISDICCIONAL DISPONIBLE
-            </div>
+            <h1 style={{ fontSize: '38px', fontWeight: '900', color: '#0f172a', fontStyle: 'italic', marginBottom: '10px' }}>Asistente Técnico Administrativo</h1>
+            <p style={{ color: '#64748b', marginBottom: '35px', fontSize: '15px' }}>
+              Herramienta de soporte para particulares, flotas y estudios jurídicos.
+            </p>
             
-            <h1 style={{ fontSize: '42px', fontWeight: '900', marginBottom: '10px', fontStyle: 'italic', lineHeight: '1', color: '#0f172a' }}>Análisis Técnico</h1>
-            <p style={{ color: '#475569', marginBottom: '35px', fontSize: '16px' }}>Revisión de actas para detectar errores de forma o notificación.</p>
-            
-            <div style={{ background: '#fff', padding: '30px', borderRadius: '25px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)', marginBottom: '40px' }}>
+            <div style={{ background: '#fff', padding: '30px', borderRadius: '25px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px rgba(0,0,0,0.03)', marginBottom: '30px' }}>
               <input 
-                style={{ width: '100%', padding: '20px', backgroundColor: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '15px', color: '#0f172a', fontSize: '28px', textAlign: 'center', marginBottom: '15px', outline: 'none', textTransform: 'uppercase', fontWeight: 'bold' }}
-                placeholder="NÚMERO DE PATENTE"
+                style={{ width: '100%', padding: '18px', border: '2px solid #f1f5f9', borderRadius: '15px', fontSize: '24px', textAlign: 'center', marginBottom: '15px', textTransform: 'uppercase', fontWeight: 'bold', outline: 'none' }}
+                placeholder="INGRESAR DOMINIO"
                 value={patente} 
                 onChange={(e) => setPatente(e.target.value)}
-                onKeyDown={handleKeyDown}
-                autoFocus
               />
-              <button onClick={handleSearch} style={{ width: '100%', padding: '18px', backgroundColor: '#2563eb', color: 'white', borderRadius: '15px', fontWeight: '900', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '16px' }}>
-                INICIAR REVISIÓN DE FALTAS <ChevronRight size={20} />
+              <button onClick={() => setStep('results')} style={{ width: '100%', padding: '18px', backgroundColor: '#2563eb', color: 'white', borderRadius: '15px', fontWeight: '900', cursor: 'pointer', border: 'none', fontSize: '16px' }}>
+                ANALIZAR ACTAS NACIONALES
               </button>
             </div>
 
-            <div style={{ textAlign: 'left' }}>
-              <p style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 'bold', marginBottom: '15px', letterSpacing: '2px', textAlign: 'center' }}>SISTEMA DE VERIFICACIÓN FEDERAL:</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
-                {provincias.map((prov) => (
-                  <span key={prov} style={{ padding: '6px 12px', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '11px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '5px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                    <MapPin size={10} color="#2563eb" /> {prov}
-                  </span>
-                ))}
+            {/* Sección de Membresías (Invitación) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', textAlign: 'left' }}>
+              <div style={{ padding: '20px', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '20px' }}>
+                <Truck size={20} color="#2563eb" style={{ marginBottom: '10px' }} />
+                <h3 style={{ fontSize: '14px', fontWeight: 'bold', margin: '0 0 5px 0' }}>Flotas de Transporte</h3>
+                <p style={{ fontSize: '11px', color: '#64748b' }}>Monitoreo masivo y alertas preventivas para logística.</p>
+              </div>
+              <div style={{ padding: '20px', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '20px' }}>
+                <Briefcase size={20} color="#2563eb" style={{ marginBottom: '10px' }} />
+                <h3 style={{ fontSize: '14px', fontWeight: 'bold', margin: '0 0 5px 0' }}>Estudios Jurídicos</h3>
+                <p style={{ fontSize: '11px', color: '#64748b' }}>Auditoría técnica automatizada para carteras de clientes.</p>
               </div>
             </div>
           </div>
         )}
 
-        {step === 'evaluating' && (
-          <div style={{ textAlign: 'center', padding: '60px' }}>
-            <Loader2 size={48} style={{ animation: 'spin 1s linear infinite', margin: '0 auto 25px', color: '#2563eb' }} />
-            <p style={{ fontSize: '12px', letterSpacing: '3px', color: '#2563eb', fontWeight: 'bold' }}>CONTRASTANDO REGISTROS NACIONALES...</p>
-          </div>
-        )}
-
         {step === 'results' && (
           <div>
-            <div style={{ marginBottom: '25px', borderLeft: '4px solid #2563eb', paddingLeft: '15px' }}>
-              <h2 style={{ fontSize: '20px', fontWeight: '900', color: '#0f172a' }}>REPORTE DOMINIO: {patente.toUpperCase()}</h2>
-              <p style={{ color: '#dc2626', fontSize: '14px', fontWeight: 'bold' }}>Se identificaron {multasEncontradas.length} actas con potenciales vicios de forma.</p>
+            <div style={{ marginBottom: '25px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '900' }}>DOMINIO: {patente.toUpperCase()}</h2>
+              <p style={{ fontSize: '13px', color: '#64748b' }}>Se han identificado los siguientes reportes para su revisión técnica.</p>
             </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {multasEncontradas.map((m) => (
-                <div key={m.id} style={{ background: '#fff', padding: '20px', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
+                <div key={m.id} style={{ background: '#fff', padding: '20px', borderRadius: '18px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#0f172a' }}>{m.falta}</div>
-                      <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px' }}>
-                        <MapPin size={12} color="#3b82f6" /> {m.lugar} • {m.fecha}
-                      </div>
+                      <div style={{ fontWeight: '800', fontSize: '15px' }}>{m.falta}</div>
+                      <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>{m.lugar} • {m.fecha}</div>
                     </div>
-                    <div style={{ fontWeight: 'bold', fontSize: '18px', color: '#0f172a' }}>{m.monto}</div>
+                    <button onClick={() => { setSelectedMulta(m); setStep('diagnosis'); }} style={{ padding: '10px 15px', backgroundColor: '#10b981', color: 'white', borderRadius: '8px', border: 'none', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
+                      INFORME TÉCNICO
+                    </button>
                   </div>
-                  <button style={{ width: '100%', padding: '14px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                    <Search size={16} /> VERIFICAR ESTADO LEGAL
-                  </button>
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {step === 'diagnosis' && selectedMulta && (
+          <div style={{ background: '#fff', padding: '35px', borderRadius: '30px', border: '1px solid #e2e8f0' }}>
+            <button onClick={() => setStep('results')} style={{ color: '#94a3b8', fontSize: '12px', background: 'none', border: 'none', cursor: 'pointer', marginBottom: '20px' }}>← VOLVER AL LISTADO</button>
             
-            <button onClick={() => setStep('input')} style={{ marginTop: '35px', background: 'none', border: 'none', color: '#64748b', fontSize: '12px', cursor: 'pointer', width: '100%', fontWeight: 'bold', textDecoration: 'underline' }}>CONSULTAR OTRA PATENTE</button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '25px' }}>
+              <FileText color="#2563eb" />
+              <h2 style={{ fontSize: '22px', fontWeight: '900', margin: 0 }}>Diagnóstico de Consistencia</h2>
+            </div>
+
+            <div style={{ border: '2px solid #f8fafc', borderRadius: '15px', padding: '20px', marginBottom: '20px' }}>
+              <p style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 'bold', marginBottom: '8px' }}>HALLAZGO TÉCNICO:</p>
+              <p style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>{selectedMulta.vicio}</p>
+            </div>
+
+            <div style={{ marginBottom: '30px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 'bold' }}>Viabilidad de Rectificación Administrativa:</span>
+                <span style={{ fontSize: '15px', fontWeight: '900', color: '#10b981' }}>{selectedMulta.exito}</span>
+              </div>
+              <div style={{ width: '100%', height: '8px', backgroundColor: '#f1f5f9', borderRadius: '10px' }}>
+                <div style={{ width: selectedMulta.exito, height: '100%', backgroundColor: '#10b981', borderRadius: '10px' }}></div>
+              </div>
+            </div>
+
+            <button style={{ width: '100%', padding: '20px', backgroundColor: '#0f172a', color: 'white', borderRadius: '15px', fontWeight: '900', fontSize: '16px', cursor: 'pointer', border: 'none', marginBottom: '25px' }}>
+              ADQUIRIR ARGUMENTOS TÉCNICOS
+            </button>
+
+            <p style={{ fontSize: '10px', color: '#cbd5e1', textAlign: 'justify', lineHeight: '1.4', borderTop: '1px solid #f1f5f9', paddingTop: '15px' }}>
+              * Aclaración Profesional: MULTACHECK actúa como un soporte de auditoría de datos basado en la Ley Nacional de Tránsito y normativas jurisdiccionales. Este reporte proporciona una base técnica para la autogestión o para facilitar la labor de su abogado de confianza en caso de resistencia judicial discrecional.
+            </p>
           </div>
         )}
       </main>
 
-      <footer style={{ textAlign: 'center', padding: '50px 20px', color: '#94a3b8', fontSize: '10px', letterSpacing: '5px' }}>
-        SISTEMA DE ANÁLISIS ADMINISTRATIVO • ARGENTINA 2026
+      <footer style={{ textAlign: 'center', padding: '40px', color: '#94a3b8', fontSize: '10px', letterSpacing: '4px' }}>
+        MULTACHECK • SOPORTE TÉCNICO PARA PROFESIONALES Y FLOTAS
       </footer>
-
-      <style>{` @keyframes spin { to { transform: rotate(360deg); } } `}</style>
     </div>
   );
 }
