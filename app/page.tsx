@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef } from 'react';
-import { Scale, Upload, Loader2, Check, AlertTriangle, XCircle, FileText, Download, Lock } from 'lucide-react';
+import { Scale, Upload, Loader2, Check, AlertTriangle, XCircle, FileText, Download, Lock, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function MultaCheck() {
   const [step, setStep] = useState('input'); // 'input', 'analyzing', 'result'
@@ -34,9 +34,11 @@ export default function MultaCheck() {
       <style jsx global>{`
         @import url('https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css');
         .blur-text { filter: blur(5px); user-select: none; }
+        @keyframes progress { 0% { width: 0%; } 100% { width: 100%; } }
+        .animate-progress-bar { animation: progress 7.5s linear forwards; }
       `}</style>
 
-      {/* Navbar */}
+      {/* Navbar con Azul */}
       <nav className="bg-white border-b border-slate-200 py-4 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -54,12 +56,12 @@ export default function MultaCheck() {
             <div className="text-center mb-10">
               <h2 className="text-blue-600 font-bold text-sm uppercase tracking-widest mb-3 italic">Asistencia técnica y administrativa nacional</h2>
               <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4 tracking-tight">Resolvé tus infracciones con IA</h1>
-              <p className="text-lg text-slate-600 max-w-2xl mx-auto">Analizá tu multa según la Ley 24.449 y detectá vicios de forma al instante.</p>
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto font-medium">Analizá tu multa según la Ley 24.449 y detectá vicios de forma al instante.</p>
             </div>
 
             <div className="bg-white p-8 rounded-3xl shadow-2xl border border-slate-200 mb-10">
               <div className="grid md:grid-cols-2 gap-4 mb-6">
-                <select className="p-4 bg-slate-50 border border-slate-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-blue-500 transition-all" value={jurisdiccion} onChange={(e) => setJurisdiccion(e.target.value)}>
+                <select className="p-4 bg-slate-50 border border-slate-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm" value={jurisdiccion} onChange={(e) => setJurisdiccion(e.target.value)}>
                   <option value="">Lugar de la infracción...</option>
                   <option value="CABA">CABA</option>
                   <option value="PBA">Provincia de Buenos Aires</option>
@@ -68,15 +70,17 @@ export default function MultaCheck() {
                 <input type="text" placeholder="Patente del vehículo" className="p-4 bg-slate-50 border border-slate-200 rounded-xl font-semibold uppercase outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
               </div>
 
+              {/* Recuadro de carga con Azul */}
               <div onClick={() => fileInputRef.current.click()} className={`border-2 border-dashed rounded-2xl p-10 text-center transition-all cursor-pointer ${fileSelected ? 'border-emerald-400 bg-emerald-50/30' : 'border-slate-200 hover:border-blue-400 bg-slate-50/50'}`}>
                 <input type="file" ref={fileInputRef} onChange={(e) => setFileSelected(e.target.files[0])} className="hidden" accept=".pdf,image/*" />
                 {!fileSelected ? (
-                  <><Upload className="mx-auto h-12 w-12 text-slate-300 mb-4" /><p className="text-slate-600 font-bold text-lg">Subir PDF o Imagen de la multa</p></>
+                  <><Upload className="mx-auto h-12 w-12 text-blue-300 hover:text-blue-500 mb-4" /><p className="text-slate-600 font-bold text-lg">Subir PDF o Imagen de la multa</p></>
                 ) : (
                   <><div className="bg-emerald-500 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"><Check className="text-white w-8 h-8" /></div><p className="text-emerald-700 font-bold text-lg italic">Documento listo para análisis</p></>
                 )}
               </div>
 
+              {/* Botón Principal con Azul */}
               <button onClick={handleStartAnalysis} className={`w-full mt-6 font-bold py-5 rounded-2xl transition-all text-xl shadow-lg ${fileSelected && jurisdiccion ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>Comenzar Análisis Gratuito</button>
             </div>
           </div>
@@ -90,7 +94,7 @@ export default function MultaCheck() {
               <p className="text-slate-500 text-lg">Nuestros algoritmos están buscando inconsistencias legales...</p>
             </div>
             <div className="max-w-md mx-auto bg-slate-100 h-3 rounded-full overflow-hidden">
-              <div className="bg-blue-600 h-full w-full animate-pulse transition-all duration-1000"></div>
+              <div className="bg-blue-600 h-full animate-progress-bar w-full"></div>
             </div>
           </div>
         )}
@@ -111,7 +115,7 @@ export default function MultaCheck() {
               </div>
             </div>
 
-            {/* PREVISUALIZACION Y PAYWALL */}
+            {/* PREVISUALIZACION Y PAYWALL CON AZUL */}
             <div className="grid md:grid-cols-5 gap-8">
               <div className="md:col-span-3 bg-white p-6 rounded-3xl border border-slate-200 shadow-lg relative overflow-hidden">
                 <div className="flex items-center gap-2 mb-4 border-b pb-4"><FileText className="text-slate-400" /><span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Ejemplo de tu Descargo</span></div>
@@ -132,9 +136,9 @@ export default function MultaCheck() {
 
               <div className="md:col-span-2 space-y-4">
                 <div className="bg-blue-600 p-8 rounded-3xl text-white shadow-xl shadow-blue-200">
-                  <h3 className="text-xl font-bold mb-2">Generar documento listo para presentar</h3>
+                  <h3 className="text-xl font-bold mb-2 tracking-tight">Generar documento listo para presentar</h3>
                   <p className="text-sm opacity-90 mb-6">Incluye escrito personalizado, fundamentos legales y guía práctica de presentación.</p>
-                  <div className="text-3xl font-black mb-6">$ 4.500 <span className="text-sm font-normal opacity-70">Pago único</span></div>
+                  <div className="text-3xl font-black mb-6 tracking-tighter">$ 4.500 <span className="text-sm font-normal opacity-70">Pago único</span></div>
                   <button className="w-full bg-white text-blue-600 font-bold py-4 rounded-xl hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
                     Descargar Ahora <Download className="w-5 h-5" />
                   </button>
@@ -147,17 +151,22 @@ export default function MultaCheck() {
           </div>
         )}
 
-        <footer className="mt-12 text-center text-slate-400 text-xs italic">
-          <p>MultaCheck es un asistente técnico administrativo. No constituye asesoramiento legal profesional.</p>
-        </footer>
+        {/* Footer con Iconos con Azul */}
+        <div className="mt-16 grid md:grid-cols-3 gap-6 text-center border-t border-slate-200 pt-10">
+            <div className="p-4 bg-white rounded-xl shadow-sm border">
+                <ShieldCheck className="w-10 h-10 text-blue-600 mx-auto mb-3" />
+                <p className="text-sm font-bold text-slate-700">Contrastamos el acta con la Ley Nacional 24.449.</p>
+            </div>
+            <div className="p-4 bg-white rounded-xl shadow-sm border">
+                <AlertCircle className="w-10 h-10 text-amber-600 mx-auto mb-3" />
+                <p className="text-sm font-bold text-slate-700">Detectamos falta de homologación en radares.</p>
+            </div>
+            <div className="p-4 bg-white rounded-xl shadow-sm border">
+                <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto mb-3" />
+                <p className="text-sm font-bold text-slate-700">Alta precisión en vicios procedimentales.</p>
+            </div>
+        </div>
       </main>
     </div>
   );
-}
-
-// Icono faltante que no estaba en el import inicial
-function CheckCircle2(props) {
-  return (
-    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
-  )
 }
