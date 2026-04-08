@@ -6,10 +6,9 @@ export default function MultaCheck() {
   const [step, setStep] = useState('input'); 
   const [patente, setPatente] = useState('');
   
-  // Listado de provincias para la portada
   const provincias = [
     "CABA", "Buenos Aires", "Córdoba", "Santa Fe", "Mendoza", 
-    "Salta", "Tucumán", "Neuquén", "Misiones", "Entre Ríos", "San Juan"
+    "Salta", "Tucumán", "Neuquén", "Misiones", "Entre Ríos", "San Juan", "Chubut"
   ];
 
   const multasEncontradas = [
@@ -18,8 +17,11 @@ export default function MultaCheck() {
     { id: 3, fecha: "05/02/2026", lugar: "Escobar, PBA", monto: "$42.100", falta: "Luces Bajas Reglamentarias" },
     { id: 4, fecha: "15/02/2026", lugar: "Córdoba Capital", monto: "$91.200", falta: "Semáforo en Rojo (Cámara)" },
     { id: 5, fecha: "02/03/2026", lugar: "Rosario, Santa Fe", monto: "$28.500", falta: "Mal Estacionamiento" },
-    { id: 6, fecha: "12/03/2026", lugar: "Salta City", monto: "$63.200", falta: "Exceso de Velocidad (Ruta 68)" },
-    { id: 7, fecha: "20/03/2026", lugar: "Mendoza City", monto: "$55.000", falta: "Giro prohibido en Avenida" }
+    { id: 6, fecha: "12/03/2026", lugar: "Salta (Cabra Corral)", monto: "$63.200", falta: "Exceso de Velocidad (Ruta 68)" },
+    { id: 7, fecha: "20/03/2026", lugar: "Mendoza City", monto: "$55.000", falta: "Giro prohibido en Avenida" },
+    { id: 8, fecha: "28/03/2026", lugar: "San Miguel de Tucumán", monto: "$40.000", falta: "Falta de Seguro" },
+    { id: 9, fecha: "05/04/2026", lugar: "Neuquén Capital", monto: "$15.200", falta: "Uso de Celular" },
+    { id: 10, fecha: "10/04/2026", lugar: "Mar del Plata, PBA", monto: "$77.300", falta: "Exceso Velocidad (Autovía 2)" }
   ];
 
   const handleSearch = () => {
@@ -33,13 +35,14 @@ export default function MultaCheck() {
   };
 
   return (
-    <div style={{ backgroundColor: '#020617', minHeight: '100vh', color: 'white', fontFamily: 'sans-serif' }}>
+    <div style={{ backgroundColor: '#fdfbf7', minHeight: '100vh', color: '#1e293b', fontFamily: 'sans-serif' }}>
       
-      <nav style={{ padding: '15px 30px', borderBottom: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '900', fontSize: '18px' }}>
-          <Scale size={20} color="#3b82f6" /> MULTACHECK
+      {/* Navbar con Monitor */}
+      <nav style={{ padding: '15px 30px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '900', fontSize: '18px', color: '#0f172a' }}>
+          <Scale size={20} color="#2563eb" /> MULTACHECK
         </div>
-        <div style={{ fontSize: '11px', color: '#60a5fa', border: '1px solid #1d4ed8', padding: '5px 12px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <div style={{ fontSize: '11px', color: '#2563eb', border: '1px solid #bfdbfe', padding: '5px 12px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 'bold' }}>
           <Users size={12} /> 1.240 USUARIOS EN LÍNEA
         </div>
       </nav>
@@ -48,16 +51,16 @@ export default function MultaCheck() {
         
         {step === 'input' && (
           <div style={{ textAlign: 'center' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: '#1e293b', padding: '8px 16px', borderRadius: '50px', fontSize: '12px', color: '#94a3b8', marginBottom: '20px', border: '1px solid #334155' }}>
-              <Globe size={14} className="text-blue-400" /> COBERTURA NACIONAL ACTIVA
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: '#f1f5f9', padding: '8px 16px', borderRadius: '50px', fontSize: '12px', color: '#64748b', marginBottom: '20px', border: '1px solid #e2e8f0' }}>
+              <Globe size={14} color="#3b82f6" /> COBERTURA FEDERAL ACTIVA
             </div>
             
-            <h1 style={{ fontSize: '42px', fontWeight: '900', marginBottom: '10px', fontStyle: 'italic', lineHeight: '1' }}>Auditoría Federal</h1>
-            <p style={{ color: '#94a3b8', marginBottom: '35px', fontSize: '16px' }}>Análisis técnico de fotomultas y actas presenciales.</p>
+            <h1 style={{ fontSize: '42px', fontWeight: '900', marginBottom: '10px', fontStyle: 'italic', lineHeight: '1', color: '#0f172a' }}>Auditoría Técnica</h1>
+            <p style={{ color: '#475569', marginBottom: '35px', fontSize: '16px' }}>Detección de vicios de forma en actas de todo el país.</p>
             
-            <div style={{ background: '#0f172a', padding: '30px', borderRadius: '25px', border: '1px solid #1e293b', marginBottom: '40px' }}>
+            <div style={{ background: '#fff', padding: '30px', borderRadius: '25px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)', marginBottom: '40px' }}>
               <input 
-                style={{ width: '100%', padding: '20px', backgroundColor: '#000', border: '2px solid #1e293b', borderRadius: '15px', color: 'white', fontSize: '28px', textAlign: 'center', marginBottom: '15px', outline: 'none', textTransform: 'uppercase', fontWeight: 'bold' }}
+                style={{ width: '100%', padding: '20px', backgroundColor: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '15px', color: '#0f172a', fontSize: '28px', textAlign: 'center', marginBottom: '15px', outline: 'none', textTransform: 'uppercase', fontWeight: 'bold' }}
                 placeholder="INGRESAR PATENTE"
                 value={patente} 
                 onChange={(e) => setPatente(e.target.value)}
@@ -65,17 +68,17 @@ export default function MultaCheck() {
                 autoFocus
               />
               <button onClick={handleSearch} style={{ width: '100%', padding: '18px', backgroundColor: '#2563eb', color: 'white', borderRadius: '15px', fontWeight: '900', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '16px' }}>
-                AUDITAR VEHÍCULO <ChevronRight size={20} />
+                AUDITAR TODAS LAS FALTAS <ChevronRight size={20} />
               </button>
             </div>
 
-            {/* Sección de Provincias Visibles */}
+            {/* Provincias Visibles */}
             <div style={{ textAlign: 'left' }}>
-              <p style={{ fontSize: '11px', color: '#475569', fontWeight: 'bold', marginBottom: '15px', letterSpacing: '2px', textAlign: 'center' }}>JURISDICCIONES VINCULADAS</p>
+              <p style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 'bold', marginBottom: '15px', letterSpacing: '2px', textAlign: 'center' }}>SISTEMA VINCULADO A:</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
                 {provincias.map((prov) => (
-                  <span key={prov} style={{ padding: '6px 12px', backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '11px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <ShieldCheck size={10} color="#3b82f6" /> {prov}
+                  <span key={prov} style={{ padding: '6px 12px', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '11px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '5px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                    <ShieldCheck size={10} color="#10b981" /> {prov}
                   </span>
                 ))}
               </div>
@@ -85,43 +88,43 @@ export default function MultaCheck() {
 
         {step === 'evaluating' && (
           <div style={{ textAlign: 'center', padding: '60px' }}>
-            <Loader2 size={48} style={{ animation: 'spin 1s linear infinite', margin: '0 auto 25px', color: '#3b82f6' }} />
-            <p style={{ fontSize: '12px', letterSpacing: '3px', color: '#60a5fa', fontWeight: 'bold' }}>SINCRONIZANDO CON REGISTROS PROVINCIALES...</p>
+            <Loader2 size={48} style={{ animation: 'spin 1s linear infinite', margin: '0 auto 25px', color: '#2563eb' }} />
+            <p style={{ fontSize: '12px', letterSpacing: '3px', color: '#2563eb', fontWeight: 'bold' }}>ESCANEANDO REGISTROS PROVINCIALES...</p>
           </div>
         )}
 
         {step === 'results' && (
           <div>
-            <div style={{ marginBottom: '25px', borderLeft: '4px solid #3b82f6', paddingLeft: '15px' }}>
-              <h2 style={{ fontSize: '20px', fontWeight: '900' }}>DOMINIO: {patente.toUpperCase()}</h2>
-              <p style={{ color: '#ef4444', fontSize: '14px', fontWeight: 'bold' }}>{multasEncontradas.length} infracciones detectadas con fallos de procedimiento.</p>
+            <div style={{ marginBottom: '25px', borderLeft: '4px solid #2563eb', paddingLeft: '15px' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: '900', color: '#0f172a' }}>DOMINIO: {patente.toUpperCase()}</h2>
+              <p style={{ color: '#dc2626', fontSize: '14px', fontWeight: 'bold' }}>Se detectaron {multasEncontradas.length} actas con irregularidades técnicas.</p>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               {multasEncontradas.map((m) => (
-                <div key={m.id} style={{ background: '#0f172a', padding: '20px', borderRadius: '20px', border: '1px solid #1e293b' }}>
+                <div key={m.id} style={{ background: '#fff', padding: '20px', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
                     <div>
-                      <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#f8fafc' }}>{m.falta}</div>
-                      <div style={{ fontSize: '12px', color: '#60a5fa', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px' }}>
-                        <MapPin size={12} /> {m.lugar} • {m.fecha}
+                      <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#0f172a' }}>{m.falta}</div>
+                      <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px' }}>
+                        <MapPin size={12} color="#3b82f6" /> {m.lugar} • {m.fecha}
                       </div>
                     </div>
-                    <div style={{ fontWeight: 'bold', fontSize: '17px', color: '#f1f5f9' }}>{m.monto}</div>
+                    <div style={{ fontWeight: 'bold', fontSize: '18px', color: '#0f172a' }}>{m.monto}</div>
                   </div>
-                  <button style={{ width: '100%', padding: '14px', backgroundColor: '#059669', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <button style={{ width: '100%', padding: '14px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                     <CheckCircle size={16} /> ANALIZAR VIABILIDAD DE DEFENSA
                   </button>
                 </div>
               ))}
             </div>
             
-            <button onClick={() => setStep('input')} style={{ marginTop: '35px', background: 'none', border: 'none', color: '#475569', fontSize: '12px', cursor: 'pointer', width: '100%', fontWeight: 'bold', textDecoration: 'underline' }}>NUEVA AUDITORÍA DE DOMINIO</button>
+            <button onClick={() => setStep('input')} style={{ marginTop: '35px', background: 'none', border: 'none', color: '#64748b', fontSize: '12px', cursor: 'pointer', width: '100%', fontWeight: 'bold', textDecoration: 'underline' }}>REALIZAR OTRA CONSULTA</button>
           </div>
         )}
       </main>
 
-      <footer style={{ textAlign: 'center', padding: '50px 20px', color: '#1e293b', fontSize: '10px', letterSpacing: '5px' }}>
+      <footer style={{ textAlign: 'center', padding: '50px 20px', color: '#94a3b8', fontSize: '10px', letterSpacing: '5px' }}>
         MULTACHECK ARGENTINA • 2026
       </footer>
 
