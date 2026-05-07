@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id                   String    @id @default(uuid())
+  name                 String
+  slug                 String    @unique
+  subscriptionTier     String
+  settings             Json
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  subscriptionStatus   String?
+  subscriptionPeriodEnd DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  users       User[]
+  multas      Multa[]
+  auditLogs   AuditLog[]
+  usageDaily  UsageDaily[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String
+  password  String
+  role      String   @default("user")
+  tenantId  String
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  multas    Multa[]
+  auditLogs AuditLog[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  tenantId  String?
+  userId    String?
+  action    String
+  metadata  Json
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model UsageDaily {
+  id           String @id @default(uuid())
+  tenantId     String
+  dateKey      String
+  analyzeCount Int    @default(0)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, dateKey])
+  @@index([tenantId])
+}
+
+model Multa {
+  id                      String    @id @default(uuid())
+  tenantId                String
+  userId                  String
+  requestHash             String
+  country                 String
+  type                    String
+  description             String?
+  rawInput                String?
+  label                   String?
+  trafficLight            String?
+  idempotencyKey          String?   @unique
+  lifecycleState          String    @default("ANALYZED")
+  paid                    Boolean   @default(false)
+  paymentStatus           String?
+  dischargeBody           String?
+  stripeCheckoutSessionId String?   @unique
+  stripePaymentIntentId   String?
+  resultJson              Json
+  traceCreatedAt          DateTime?
+  traceAnalyzedAt         DateTime?
+  traceCheckoutAt         DateTime?
+  tracePaidAt             DateTime?
+  traceReportAt           DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  tenant      Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opsEvents   MultaOpsEvent[]
+
+  @@unique([tenantId, userId, requestHash])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([requestHash])
+}
+
+model MultaOpsEvent {
+  id        String   @id @default(uuid())
+  multaId   String
+  event     String
+  payload   Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  multa Multa @relation(fields: [multaId], references: [id], onDelete: Cascade)
+
+  @@index([multaId])
+  @@index([event])
+  @@index([createdAt])
+}
+
+model ProcessedStripeWebhookEvent {
+  id         String   @id
+  eventType  String
+  receivedAt DateTime @default(now())
+
+  @@index([receivedAt])
+}

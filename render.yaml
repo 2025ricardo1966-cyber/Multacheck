@@ -1,0 +1,16 @@
+# Blueprint opcional para Render — crear servicio Web desde el repo raíz.
+# Doc: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: multacheck-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: PORT
+        sync: false
+      - key: FRONTEND_URL
+        sync: false

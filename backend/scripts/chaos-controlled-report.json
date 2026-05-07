@@ -1,0 +1,24 @@
+{
+  "totalRequests": 500,
+  "concurrencyCap": 25,
+  "chaosUnstableFailRate": 0.2,
+  "loadElapsedSec": 282.87,
+  "throughputApprox": 1.77,
+  "successfulWrites": 425,
+  "simulatedFailures": 75,
+  "analyzeReturnedOtherBizFail": 0,
+  "analyzeThrewUnexpected": 0,
+  "recoveryRequestsOk": true,
+  "duplicateRequestHashRowsInDb": 0,
+  "idempotencyKeyMultipleMultaIdsViolations": 0,
+  "prismaMirrorChaosDbRejections": 0,
+  "unexpectedUnhandledRejections": 0,
+  "silentFailures": 0,
+  "gates": {
+    "idempotency": "PASS",
+    "dataConsistency": "PASS",
+    "systemStability": "PASS",
+    "crashResistance": "PASS",
+    "productionReady": true
+  }
+}

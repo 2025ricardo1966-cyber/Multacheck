@@ -1,0 +1,43 @@
+[
+  {
+    "nombre": "prescripcion",
+    "peso": 30,
+    "gravedad": "alta",
+    "motivo": "Antigüedad mayor a 5 años",
+    "razon": "Posible prescripción de la infracción",
+    "tipo": "antiguedad",
+    "condicion": "mayor_a_5"
+  },
+  {
+    "nombre": "antigua",
+    "peso": 10,
+    "gravedad": "media",
+    "motivo": "Antigüedad mayor a 2 años",
+    "tipo": "antiguedad",
+    "condicion": "entre_2_y_5"
+  },
+  {
+    "nombre": "radar",
+    "peso": 5,
+    "gravedad": "baja",
+    "motivo": "Tipo de infracción velocidad",
+    "tipo": "tipo_infraccion",
+    "condicion": "igual_velocidad"
+  },
+  {
+    "nombre": "semaforo",
+    "peso": -5,
+    "gravedad": "media",
+    "motivo": "Tipo de infracción semáforo",
+    "tipo": "tipo_infraccion",
+    "condicion": "igual_semaforo"
+  },
+  {
+    "nombre": "datos_insuficientes",
+    "peso": -20,
+    "gravedad": "alta",
+    "motivo": "Calidad de input menor a 0.5",
+    "tipo": "calidad_input",
+    "condicion": "menor_a_0_5"
+  }
+]

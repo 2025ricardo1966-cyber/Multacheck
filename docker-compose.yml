@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: multacheck
+      POSTGRES_PASSWORD: multacheck
+      POSTGRES_DB: multacheck
+    volumes:
+      - multacheck_pg:/var/lib/postgresql/data
+
+volumes:
+  multacheck_pg:
