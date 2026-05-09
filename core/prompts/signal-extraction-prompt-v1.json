@@ -1,0 +1,11 @@
+{
+  "STEP": "SIGNAL_EXTRACTION_PROMPT_V1",
+  "version": "1.0.0",
+  "system_prompt_en_file": "signal-extraction-system-v1.txt",
+  "role": "system",
+  "pipeline_position": "before CANONICAL_INFRACTION_SCHEMA_V1 normalization",
+  "notes": [
+    "`value` is numeric on purpose for downstream features (use 0/1 for booleans, scales for graded signals).",
+    "`data_quality_flags` are short machine-readable tags (e.g. OCR_LOW_QUALITY, AMBIGUOUS_DATE)."
+  ]
+}

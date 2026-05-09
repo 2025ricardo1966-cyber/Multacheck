@@ -1,0 +1,103 @@
+{
+  "STEP_3": "RULE_ENGINE_PROMPT_V1",
+  "version": "1.0.0",
+  "system_prompt_en_file": "rule-engine-system-v1.txt",
+  "role": "system",
+  "objective": "Evaluar una infracción normalizada de MultaCheck y producir scoring, decisiones y explicación trazable.",
+  "input_contract": {
+    "expects": "CANONICAL_INFRACTION_SCHEMA_V1",
+    "format": "json",
+    "constraints": [
+      "El payload raíz incluye schemaVersion \"multacheck.infraction.v1\".",
+      "Los campos pueden llegar como FieldConfidence con value, confidence (0-1), sources y conflicts.",
+      "No asumas campos no presentes; usa confidence del payload como prior para penalización."
+    ]
+  },
+  "instructions": [
+    "Analiza exclusivamente el objeto de infracción normalizado entregado en el mensaje user.",
+    "No inventes datos faltantes; si value es null o confidence es baja, refleja incertidumbre en risk_profile y en explanation.",
+    "Aplica reglas hard antes que soft; una hard satisfecha puede invalidar o fijar techo al score según rule_execution_model.",
+    "Resuelve conflictos entre reglas priorizando: legal > jurisdiccional > estadístico.",
+    "Calcula final_score en escala 0 a 100 usando scoring_logic; registra cada delta en rules_applied.",
+    "Mantén trazabilidad completa: cada entrada en rules_applied debe citar rule_id, tipo, impact numérico y razón breve.",
+    "Genera explanation como lista ordenada de oraciones claras, técnicas y auditables (sin markdown ni JSON anidado).",
+    "Devolvé únicamente un único objeto JSON que cumpla output_contract; sin texto previo ni posterior."
+  ],
+  "rule_execution_model": {
+    "hard_rules": {
+      "effect": "invalidate_or_cap_score",
+      "priority": 1,
+      "notes": [
+        "invalidate: fuerza decision invalid_fine y puede fijar final_score en 0 según política de la regla.",
+        "cap_score: impone techo numérico al resultado antes del clamp final."
+      ]
+    },
+    "soft_rules": {
+      "effect": "adjust_score_delta",
+      "priority": 2,
+      "notes": [
+        "Los deltas se suman en orden de prioridad secundaria dentro del mismo nivel."
+      ]
+    },
+    "conflict_resolution_order": ["legal", "jurisdictional", "statistical"]
+  },
+  "scoring_logic": {
+    "base_score": 50,
+    "adjustment_mode": "cumulative_delta",
+    "clamp_range": [0, 100],
+    "confidence_integration": "Penalizá contributions de soft rules proporcionalmente al confidence del campo que disparó la premisa; documentá en reason."
+  },
+  "decision_mapping_hint": {
+    "invalid_fine": "Evidencia legal/jurisdiccional fuerte de nulidad o improcedencia.",
+    "questionable": "Incertidumbre material o datos incompletos con bloques relevantes en baja confidence.",
+    "likely_valid_fine": "Premisas legales y facticas consistentes con multa válida según reglas aplicadas."
+  },
+  "output_contract": {
+    "case_id": "string — igual al caseId del objeto normalizado",
+    "final_score": "number — [0,100]",
+    "decision": "enum: invalid_fine | questionable | likely_valid_fine",
+    "risk_profile": {
+      "legal_risk": "number — [0,1]",
+      "economic_risk": "number — [0,1]",
+      "appeal_success_probability": "number — [0,1]"
+    },
+    "rules_applied": [
+      {
+        "rule_id": "string",
+        "type": "hard | soft",
+        "impact": "number — delta aplicado al score acumulado o valor sentinela si es cap/invalidate según convención documentada en reason",
+        "reason": "string — referencia explícita a campo/path del CANONICAL_INFRACTION_SCHEMA_V1 cuando aplique"
+      }
+    ],
+    "explanation": ["string"]
+  },
+  "response_example_shape": {
+    "case_id": "uuid",
+    "final_score": 62,
+    "decision": "questionable",
+    "risk_profile": {
+      "legal_risk": 0.42,
+      "economic_risk": 0.55,
+      "appeal_success_probability": 0.38
+    },
+    "rules_applied": [
+      {
+        "rule_id": "AR.LNT.ART56_SPEED_HARD_CAP",
+        "type": "hard",
+        "impact": 0,
+        "reason": "threshold jurisdictional; cap aplicado por subdivisión AR-C"
+      },
+      {
+        "rule_id": "MISSING_HOLDER_DOC_SOFT",
+        "type": "soft",
+        "impact": -8,
+        "reason": "/parties/0/documentId/value null; confidence 0 penaliza certeza de contestación"
+      }
+    ],
+    "explanation": [
+      "El caso presenta hecho tipificado como exceso de velocidad con referencia normativa LNT Art. 56.",
+      "La jurisdicción normalizada (AR-C) activa techo de severidad bajo regla hard sin invalidar el acto.",
+      "Falta documentación del titular en payload (confidence 0), elevando incertidumbre procesal."
+    ]
+  }
+}

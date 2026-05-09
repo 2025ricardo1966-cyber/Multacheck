@@ -6,6 +6,10 @@ import {
   REPORT_TITLE,
 } from "../copy/funnelCopy.js";
 import { fetchDischarge, fetchPaymentStatus } from "../services/index.js";
+import {
+  CaseState,
+  dischargeAvailableFromCaseState,
+} from "../constants/caseState.js";
 
 const POLL_MS = 2500;
 const POLL_MAX_ATTEMPTS = 60;
@@ -102,15 +106,29 @@ export default function DescargoPage() {
       while (!cancelled && attempts < POLL_MAX_ATTEMPTS) {
         attempts += 1;
         try {
-          const statusRes = await fetchPaymentStatus(multaId);
-          const row = statusRes?.data;
+          const row = await fetchPaymentStatus(multaId);
           if (cancelled) return;
 
-          if (
-            row?.lifecycleState === "ANALYZED" &&
-            !row?.paid &&
-            !resumeNav.current
-          ) {
+          const cs = row.caseState;
+
+          if (!cs) {
+            if (!resumeNav.current) {
+              resumeNav.current = true;
+              navigate(`/?resume=${encodeURIComponent(multaId)}`, {
+                replace: true,
+              });
+            }
+            return;
+          }
+
+          const dischargeOk = dischargeAvailableFromCaseState(cs);
+
+          const prePay =
+            cs === CaseState.CREATED ||
+            cs === CaseState.ANALYZED ||
+            cs === CaseState.PAYMENT_PENDING;
+
+          if (prePay && !resumeNav.current) {
             resumeNav.current = true;
             navigate(`/?resume=${encodeURIComponent(multaId)}`, {
               replace: true,
@@ -118,20 +136,24 @@ export default function DescargoPage() {
             return;
           }
 
-          if (row?.lifecycleState === "ERROR_STATE" && !cancelled) {
-            setErr(
-              "We’re reviewing this case. Return home and try diagnosis again shortly."
-            );
-            setPhase("error");
+          if (cs === CaseState.FAILED) {
+            if (!cancelled) {
+              setErr(
+                "We’re reviewing this case. Return home and try diagnosis again shortly."
+              );
+              setPhase("error");
+            }
             return;
           }
 
-          if (row?.paid === true && row?.dischargeAvailable === true) {
+          if (dischargeOk) {
             setPhase("generating");
             const disc = await fetchDischarge(multaId);
             if (cancelled) return;
-            if (disc?.success && disc.data?.text != null) {
-              setText(disc.data.text);
+            const bodyText =
+              disc?.dischargeBody ?? disc?.data?.text ?? null;
+            if (bodyText != null && String(bodyText).length > 0) {
+              setText(String(bodyText));
               setPhase("ready");
               return;
             }

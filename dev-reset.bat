@@ -16,8 +16,7 @@ echo [dev-reset] Starting backend...
 cd backend
 start cmd /k npm run dev
 
-echo [dev-reset] Starting frontend...
+echo [dev-reset] Starting ACTIVE frontend (Vite)...
 cd ..
-cd multacheck-dashboard
-start cmd /k npm start
-
+cd frontend
+start cmd /k npm run dev

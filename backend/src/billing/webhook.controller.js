@@ -9,6 +9,8 @@ import {
 } from "../infra/launchhealth.js";
 import * as multaPersistence from "../multas/multa.persistence.js";
 import { multaFlowLog } from "../multas/multa.debuglog.js";
+import { CaseState } from "../multas/multaCaseState.js";
+import prisma from "../db/prisma.js";
 import {
   createProcessedWebhookEvent,
   findProcessedWebhookEvent,
@@ -86,15 +88,25 @@ export async function handleStripeWebhook(req, res) {
                 ? String(pi.id)
                 : null;
 
-          const finalized =
+          let finalized =
             await multaPersistence.finalizeMultaDischargeFromWebhook(multaId, {
               stripeSessionId: session.id,
               paymentIntentId,
             });
           if (!finalized) {
-            multaFlowLog("PAYMENT_WEBHOOK_NOOP", {
+            finalized =
+              await multaPersistence.reconcileMultaDischargeFromStripeSession(
+                session.id
+              );
+          }
+          if (!finalized) {
+            multaFlowLog("PAYMENT_WEBHOOK_FINALIZE_FAILED", {
               multaId,
               stripeCheckoutSessionId: session.id,
+            });
+            return res.status(500).json({
+              error: "multa_finalize_failed",
+              code: "FINALIZE_NOOP",
             });
           }
           break;
@@ -107,6 +119,26 @@ export async function handleStripeWebhook(req, res) {
               : session.subscription.id
           );
           await syncStripeSubscription(sub);
+        }
+        break;
+      }
+      case "checkout.session.expired":
+      case "checkout.session.async_payment_failed": {
+        const session = event.data.object;
+        const multaIdRaw = session.metadata?.multaId;
+        const mid =
+          typeof multaIdRaw === "string" && multaIdRaw.trim().length > 0
+            ? multaIdRaw.trim()
+            : null;
+        if (mid && session.mode === "payment") {
+          await prisma.multa.updateMany({
+            where: { id: mid, caseState: CaseState.PAYMENT_PENDING },
+            data: { caseState: CaseState.FAILED },
+          });
+          multaFlowLog("CHECKOUT_SESSION_NOT_PAID", {
+            multaId: mid,
+            type: event.type,
+          });
         }
         break;
       }

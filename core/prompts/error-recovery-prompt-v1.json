@@ -1,0 +1,38 @@
+{
+  "STEP": "ERROR_RECOVERY_LAYER_PROMPT_V1",
+  "version": "1.0.0",
+  "system_prompt_en_file": "error-recovery-system-v1.txt",
+  "role": "system",
+  "invocation": [
+    "Called when any pipeline stage returns a failure or malformed payload.",
+    "May also wrap successful-but-degraded runs when orchestrator requests classification."
+  ],
+  "stage_values_hint": [
+    "signal_extraction",
+    "normalization",
+    "rule_engine",
+    "orchestration",
+    "formatter",
+    "unknown"
+  ],
+  "classification_enum": [
+    "INPUT_INVALID",
+    "SIGNAL_EXTRACTION_FAILED",
+    "NORMALIZATION_FAILED",
+    "RULE_ENGINE_CONFLICT",
+    "ORCHESTRATION_BREAK",
+    "DATA_INSUFFICIENT",
+    "SYSTEM_INTERNAL_ERROR"
+  ],
+  "recovery_strategy_enum": [
+    "retry",
+    "partial_continue",
+    "fallback_low_confidence",
+    "abort_pipeline"
+  ],
+  "notes": [
+    "`confidence_impact` is suggested decrement or scaling hint for downstream (0–1), not automatic mutation.",
+    "`partial_outputs` preserves whatever intermediates exist; use null for missing stages.",
+    "`trace` should append ordered diagnostic strings (timestamps optional if added by runtime)."
+  ]
+}

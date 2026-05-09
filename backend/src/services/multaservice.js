@@ -1,3 +1,4 @@
+import { analyzeWithAI } from "../ai/index.js";
 import ollamaClient from "./ollamaclient.js";
 import { applyCountryRules } from "../rules/countryrules.js";
 import { calculateScore } from "../scoring/scoringengine.js";
@@ -203,6 +204,28 @@ export async function processMulta(multaData) {
       throw new Error("No se recibieron datos de multa");
     }
 
+    const pipelineInput = {
+      case_id:
+        multaData.case_id ??
+        multaData.multaId ??
+        multaData.id ??
+        undefined,
+      raw: [
+        multaData.country,
+        multaData.type,
+        multaData.description,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .trim(),
+    };
+
+    const aiResult = await analyzeWithAI(pipelineInput);
+    if (aiResult) {
+      console.log("🤖 Usando pipeline AI");
+      return convertAIFormat(aiResult);
+    }
+
     const aiAnalysis = await resolveGravedadWithOptionalAi(multaData);
 
     try {
@@ -222,4 +245,17 @@ export async function processMulta(multaData) {
       };
     }
   }
+}
+
+function convertAIFormat(ai) {
+  return {
+    score: ai.final_score,
+    trafficLight:
+      ai.decision === "invalid_fine"
+        ? "green"
+        : ai.decision === "questionable"
+          ? "yellow"
+          : "red",
+    explanation: ai.explanation?.join(" "),
+  };
 }

@@ -3,10 +3,12 @@
  * Un solo comando: health → register → analyze (JWT solo en memoria).
  * Salida: solo el JSON final de /multa/analyze va a stdout (UTF-8).
  * Progreso y errores van a stderr.
+ *
+ * Base URL: `resolveOfficialApiBase()` → http://localhost:3000/api (sin simulación de pago).
  */
-const BASE = (
-  process.env.MULTACHECK_API ?? "http://localhost:3000/api"
-).replace(/\/$/, "");
+import { resolveOfficialApiBase } from "./official-api-base.mjs";
+
+const BASE = resolveOfficialApiBase();
 
 const HEALTH_URL = `${BASE}/health`;
 const HEALTH_ATTEMPTS = Number(process.env.MULTACHECK_HEALTH_ATTEMPTS || 40);

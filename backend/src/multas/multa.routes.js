@@ -1,20 +1,15 @@
 import { Router } from "express";
 import {
-  analyze,
   createDischargeCheckout,
   getPaymentStatus,
   getMultaState,
   getMultaFullState,
   getDischarge,
 } from "./multa.controller.js";
-import {
-  analyzeRateLimit,
-  checkoutRateLimit,
-} from "../middleware/launchratelimit.js";
+import { checkoutRateLimit } from "../middleware/launchratelimit.js";
 
 const router = Router();
 
-router.post("/multa/analyze", analyzeRateLimit, analyze);
 router.post(
   "/multa/:multaId/discharge-checkout",
   checkoutRateLimit,

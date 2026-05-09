@@ -4,17 +4,12 @@ import {
   analyzeAndPersist,
   buildAnalyzeRequestHash,
 } from "../src/multas/multa.persistence.js";
+import { CaseState } from "../src/multas/multaCaseState.js";
 
 const TOTAL_REQUESTS = 500;
 const UNIQUE_REQUEST_HASH_RATIO = 0.7;
 const UNIQUE_IDEMPOTENCY_RATIO = 0.8;
-/** Known Multa.lifecycleState values used across persistence / integrity paths (no enum export on persistence). */
-const VALID_LIFECYCLE_STATES = new Set([
-  "ANALYZED",
-  "ERROR_STATE",
-  "REPORT_READY",
-  "PAID_CONFIRMED",
-]);
+const VALID_CASE_STATES = new Set(Object.values(CaseState));
 let chaosUnhandledRejections = 0;
 let unexpectedUnhandledRejections = 0;
 
@@ -130,7 +125,7 @@ async function main() {
 
   const requestHashToMultaIds = new Map();
   for (const row of success) {
-    const multaId = row.response?.data?.id;
+    const multaId = row.response?.data?.multaId;
     if (!multaId) continue;
     const set = requestHashToMultaIds.get(row.requestHash) ?? new Set();
     set.add(multaId);
@@ -151,7 +146,7 @@ async function main() {
     select: {
       id: true,
       requestHash: true,
-      lifecycleState: true,
+      caseState: true,
       tenantId: true,
       userId: true,
       resultJson: true,
@@ -165,8 +160,8 @@ async function main() {
   const uniqueConstraintViolations = Array.from(byHashCount.values()).filter(
     (count) => count > 1
   );
-  const invalidLifecycleRows = dbRows.filter(
-    (row) => !VALID_LIFECYCLE_STATES.has(row.lifecycleState)
+  const invalidCaseStateRows = dbRows.filter(
+    (row) => !VALID_CASE_STATES.has(row.caseState)
   );
   const invalidIdentityRows = dbRows.filter((row) => !row.userId || !row.tenantId);
   const corruptRows = dbRows.filter((row) => row.resultJson == null);
@@ -178,7 +173,7 @@ async function main() {
     otherErrorCount: otherFailures.length,
     uniqueConstraintViolations: uniqueConstraintViolations.length,
     idempotencyViolations: idempotencyViolations.length,
-    invalidLifecycleRows: invalidLifecycleRows.length,
+    invalidCaseStateRows: invalidCaseStateRows.length,
     invalidIdentityRows: invalidIdentityRows.length,
     corruptRows: corruptRows.length,
     chaosUnhandledRejections,

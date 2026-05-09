@@ -2,6 +2,11 @@ import { safeTransaction } from "../db/safeTransaction.js";
 import { withAdvisoryLock } from "../db/advisoryLock.js";
 import crypto from "crypto";
 import { runWithConcurrencyLock } from "./multa.concurrency.js";
+import prisma from "../db/prisma.js";
+import { buildDischargeText } from "./dischargetemplate.js";
+import { multaFlowLog } from "./multa.debuglog.js";
+import { CaseState, normalizeCaseState } from "./multaCaseState.js";
+import { getStripe } from "../billing/stripe.service.js";
 
 /**
  * =========================================================
@@ -60,6 +65,7 @@ function buildMultaCreateData(body, { tenantId, userId, requestHash, idempotency
     trafficLight: body?.trafficLight ?? null,
     idempotencyKey: idempotencyKey ?? null,
     resultJson: body?.resultJson ?? {},
+    caseState: CaseState.CREATED,
   };
 }
 
@@ -157,5 +163,142 @@ export async function analyzeAndPersist(auth, body, options = {}) {
         timeout: 60_000,
       }
     );
+  });
+}
+
+/**
+ * Marca pago confirmado y genera informe — llamado desde Stripe webhook (backend orquesta estado).
+ * Idempotente. Transición: PAYMENT_PENDING|PAID → PAID → DISCHARGE_READY (misma transacción).
+ *
+ * @returns {Promise<boolean>} false si multa no existe o sessionId no coincide con la fila
+ */
+export async function finalizeMultaDischargeFromWebhook(
+  multaId,
+  { stripeSessionId, paymentIntentId } = {}
+) {
+  if (!multaId || typeof multaId !== "string") {
+    return false;
+  }
+
+  const multa = await prisma.multa.findUnique({
+    where: { id: multaId },
+  });
+
+  if (!multa) {
+    multaFlowLog("FINALIZE_DISCHARGE_NO_MULTA", { multaId });
+    return false;
+  }
+
+  const cs = normalizeCaseState(multa.caseState, multa);
+
+  if (
+    (cs === CaseState.DISCHARGE_READY || cs === CaseState.DISCHARGED) &&
+    multa.dischargeBody &&
+    multa.dischargeBody.length > 0
+  ) {
+    multaFlowLog("FINALIZE_DISCHARGE_IDEMPOTENT", { multaId });
+    return true;
+  }
+
+  const sessionOk =
+    !stripeSessionId ||
+    !multa.stripeCheckoutSessionId ||
+    multa.stripeCheckoutSessionId === stripeSessionId;
+
+  if (!sessionOk) {
+    multaFlowLog("FINALIZE_DISCHARGE_SESSION_MISMATCH", {
+      multaId,
+      expected: multa.stripeCheckoutSessionId,
+      got: stripeSessionId,
+    });
+    return false;
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.multa.update({
+      where: { id: multaId },
+      data: {
+        caseState: CaseState.PAID,
+        tracePaidAt: new Date(),
+        ...(paymentIntentId ? { stripePaymentIntentId: paymentIntentId } : {}),
+        ...(stripeSessionId && !multa.stripeCheckoutSessionId
+          ? { stripeCheckoutSessionId: stripeSessionId }
+          : {}),
+      },
+    });
+
+    const row = await tx.multa.findUnique({ where: { id: multaId } });
+    const dischargeBody = buildDischargeText(row);
+
+    await tx.multa.update({
+      where: { id: multaId },
+      data: {
+        dischargeBody,
+        caseState: CaseState.DISCHARGE_READY,
+      },
+    });
+  });
+
+  multaFlowLog("FINALIZE_DISCHARGE_OK", { multaId });
+  return true;
+}
+
+/**
+ * Tras un fallo de finalize, recupera la sesión en Stripe y reintenta (misma firma de pago).
+ */
+export async function reconcileMultaDischargeFromStripeSession(stripeSessionId) {
+  if (!stripeSessionId || typeof stripeSessionId !== "string") {
+    return false;
+  }
+
+  const stripe = getStripe();
+  if (!stripe) {
+    multaFlowLog("STRIPE_RECONCILE_NO_CLIENT", {});
+    return false;
+  }
+
+  let session;
+  try {
+    session = await stripe.checkout.sessions.retrieve(stripeSessionId);
+  } catch (e) {
+    multaFlowLog("STRIPE_RECONCILE_RETRIEVE_FAILED", { message: e.message });
+    return false;
+  }
+
+  if (session.mode !== "payment" || session.payment_status !== "paid") {
+    return false;
+  }
+
+  const multaIdRaw = session.metadata?.multaId;
+  const multaId =
+    typeof multaIdRaw === "string" && multaIdRaw.trim().length > 0
+      ? multaIdRaw.trim()
+      : null;
+  if (!multaId) return false;
+
+  const multa = await prisma.multa.findUnique({ where: { id: multaId } });
+  if (!multa) return false;
+
+  if (
+    multa.stripeCheckoutSessionId &&
+    multa.stripeCheckoutSessionId !== session.id
+  ) {
+    await prisma.multa.update({
+      where: { id: multaId },
+      data: { stripeCheckoutSessionId: session.id },
+    });
+  }
+
+  const pi = session.payment_intent;
+  const paymentIntentId =
+    typeof pi === "string"
+      ? pi
+      : pi && typeof pi === "object" && "id" in pi
+        ? String(pi.id)
+        : null;
+
+  return finalizeMultaDischargeFromWebhook(multaId, {
+    stripeSessionId: session.id,
+    paymentIntentId,
   });
 }

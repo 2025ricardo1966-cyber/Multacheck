@@ -24,6 +24,9 @@ export async function getMultaDebug(req, res) {
       opsEvents,
       dischargeBody,
       resultJson,
+      paymentStatus: _paymentStatus,
+      lifecycleState: _lifecycleState,
+      paid: _paid,
       ...multaRest
     } = row;
 

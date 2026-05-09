@@ -1,7 +1,9 @@
 import { api } from "./api.js";
 
 export async function analyzeMulta(payload) {
-  const { data } = await api.post("/multa/analyze", payload);
+  const { data } = await api.post("/multa/analyze", payload, {
+    timeout: 120_000,
+  });
   return data;
 }
 

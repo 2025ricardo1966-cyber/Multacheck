@@ -1,4 +1,5 @@
 import prisma from "../db/prisma.js";
+import { CaseState } from "./multaCaseState.js";
 
 export async function createMultaOpsEvent(multaId, event, payload = {}) {
   const safePayload =
@@ -16,10 +17,10 @@ export async function updateMultaErrorState(multaId) {
   return prisma.multa.updateMany({
     where: {
       id: multaId,
-      lifecycleState: { not: "ERROR_STATE" },
+      caseState: { not: CaseState.FAILED },
     },
     data: {
-      lifecycleState: "ERROR_STATE",
+      caseState: CaseState.FAILED,
     },
   });
 }

@@ -1,12 +1,27 @@
 import prisma from "../db/prisma.js";
 import * as persistence from "./multa.persistence.js";
 import stripe from "../billing/stripe.service.js";
+import { processMulta } from "../services/multaservice.js";
+import {
+  CaseState,
+  normalizeCaseState,
+  dischargeAvailableFromCaseState,
+  allowsAnalyzeTransition,
+  allowsCheckoutTransition,
+} from "./multaCaseState.js";
 
 /**
- * =========================================================
- * MULTA SERVICE - BUSINESS ORCHESTRATION LAYER
- * =========================================================
+ * Contrato mínimo de estado en TODAS las respuestas multa (siempre incluido).
+ * Campos adicionales por endpoint van aparte (analyze, checkout URL, dischargeBody, etc.).
  */
+export function toCaseStateOnlyResponse(multa) {
+  const cs = normalizeCaseState(multa.caseState, multa);
+  return {
+    multaId: multa.id,
+    caseState: cs,
+    dischargeAvailable: dischargeAvailableFromCaseState(cs),
+  };
+}
 
 function frontendBaseUrl() {
   return (
@@ -16,10 +31,74 @@ function frontendBaseUrl() {
   );
 }
 
+/** Línea de checkout “descargo” (mode=payment). Moneda/monto vía env; por defecto igual al histórico del repo (usd, 1000 = US$10.00). */
+function stripeDischargePriceData() {
+  const currency = (
+    process.env.STRIPE_DISCHARGE_CURRENCY?.trim() || "usd"
+  ).toLowerCase();
+  const raw = process.env.STRIPE_DISCHARGE_UNIT_AMOUNT?.trim();
+  const unitAmount = raw ? parseInt(raw, 10) : 1000;
+  const amount = Number.isFinite(unitAmount) && unitAmount > 0 ? unitAmount : 1000;
+  return {
+    currency,
+    product_data: {
+      name: "MultaCheck discharge report",
+    },
+    unit_amount: amount,
+  };
+}
+
+/** Locale de Checkout (ej. es). Si no se define, Stripe elige automáticamente. */
+function stripeCheckoutSessionLocale() {
+  const loc = process.env.STRIPE_CHECKOUT_LOCALE?.trim();
+  return loc || undefined;
+}
+
 function httpError(message, statusCode = 500) {
   const err = new Error(message);
   err.statusCode = statusCode;
   return err;
+}
+
+/** Salida plana del pipeline AI (`convertAIFormat`) o legacy `{ success, data }` desde motor JS. */
+function fieldsFromProcessMulta(analysis) {
+  if (
+    analysis &&
+    typeof analysis === "object" &&
+    analysis.score != null &&
+    analysis.trafficLight
+  ) {
+    const tl = String(analysis.trafficLight).toLowerCase();
+    const trafficLight =
+      tl === "green" ? "GREEN" : tl === "red" ? "RED" : "YELLOW";
+    return {
+      trafficLight,
+      label: analysis.explanation ?? null,
+      preview: {
+        scoring: { finalScore: Number(analysis.score) || 0 },
+        meta: { explanation: analysis.explanation ?? "" },
+      },
+    };
+  }
+
+  let trafficLight = "YELLOW";
+  let label = null;
+  let preview = {};
+
+  if (analysis?.success && analysis.data) {
+    if (analysis.data.trafficLight) {
+      trafficLight = analysis.data.trafficLight;
+    }
+    label = analysis.data.label ?? null;
+    if (
+      analysis.data.preview &&
+      typeof analysis.data.preview === "object"
+    ) {
+      preview = analysis.data.preview;
+    }
+  }
+
+  return { trafficLight, label, preview };
 }
 
 async function findOwnedMulta(auth, multaId) {
@@ -33,37 +112,123 @@ async function findOwnedMulta(auth, multaId) {
   });
 }
 
+/** GET /state — solo contrato de estado. */
+function toMultaStatePublic(multa) {
+  return toCaseStateOnlyResponse(multa);
+}
+
+/** Quita columnas legado del objeto persistido para no exponerlas por API. */
+function stripLegacyDbFields(multa) {
+  const {
+    id: _id,
+    paymentStatus: _paymentStatus,
+    lifecycleState: _lifecycleState,
+    paid: _paid,
+    ...rest
+  } = multa;
+  return rest;
+}
+
+/**
+ * Vista previa sin persistencia ni tenant — mismo motor `processMulta` que el analyze autenticado.
+ */
+export async function analyzeAnonymousFlow(body) {
+  const multaData = {
+    country: body?.country ?? "AR",
+    type: body?.type ?? "transito",
+    description: String(body?.description ?? "").trim(),
+  };
+
+  const analysis = await processMulta(multaData);
+  const { trafficLight, label, preview } = fieldsFromProcessMulta(analysis);
+
+  return {
+    success: true,
+    data: {
+      trafficLight,
+      label,
+      resultJson: preview,
+      anonymousPreview: true,
+      dischargeAvailable: false,
+    },
+  };
+}
+
 export async function createMultaFlow(auth, body, options = {}) {
-  // 1. Persistencia blindada (única fuente de verdad)
   const result = await persistence.analyzeAndPersist(auth, body, options);
 
-  // 2. Integración externa opcional (Stripe)
+  if (!result.success || !result.data?.id) {
+    return result;
+  }
+
+  const multaRow = result.data;
+  const prevCs = normalizeCaseState(multaRow.caseState, multaRow);
+  const shouldSetAnalyzed = allowsAnalyzeTransition(prevCs);
+
+  const multaData = {
+    country: body?.country ?? multaRow.country ?? "AR",
+    type: body?.type ?? multaRow.type ?? "transito",
+    description:
+      (body?.description ?? multaRow.description ?? "").trim() ||
+      multaRow.description ||
+      "",
+  };
+
+  const analysis = await processMulta(multaData);
+  const { trafficLight, label, preview } = fieldsFromProcessMulta(analysis);
+
+  const updated = await prisma.multa.update({
+    where: { id: multaRow.id },
+    data: {
+      trafficLight,
+      label,
+      resultJson: preview,
+      traceAnalyzedAt: new Date(),
+      ...(shouldSetAnalyzed ? { caseState: CaseState.ANALYZED } : {}),
+    },
+  });
+
+  const refreshed = await prisma.multa.findUnique({
+    where: { id: updated.id },
+  });
+
+  const payload = {
+    success: true,
+    data: {
+      trafficLight: refreshed.trafficLight,
+      label: refreshed.label,
+      resultJson: refreshed.resultJson,
+      ...toCaseStateOnlyResponse(refreshed),
+    },
+  };
+
   if (options?.createCheckout) {
+    const priceData = stripeDischargePriceData();
+    const checkoutLocale = stripeCheckoutSessionLocale();
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [
         {
           price_data: {
-            currency: "usd",
-            product_data: {
-              name: "MultaCheck Service",
-            },
-            unit_amount: 1000,
+            currency: priceData.currency,
+            product_data: { name: "MultaCheck Service" },
+            unit_amount: priceData.unit_amount,
           },
           quantity: 1,
         },
       ],
       success_url: options.successUrl,
       cancel_url: options.cancelUrl,
+      ...(checkoutLocale ? { locale: checkoutLocale } : {}),
     });
 
     return {
-      ...result,
+      ...payload,
       checkoutSession: session,
     };
   }
 
-  return result;
+  return payload;
 }
 
 export async function createDischargeCheckoutFlow(auth, multaId, body = {}) {
@@ -72,31 +237,32 @@ export async function createDischargeCheckoutFlow(auth, multaId, body = {}) {
     throw httpError("Multa no encontrada", 404);
   }
 
+  const cs = normalizeCaseState(multa.caseState, multa);
+  if (!allowsCheckoutTransition(cs)) {
+    throw httpError("Estado del caso no permite iniciar pago", 409);
+  }
+
   if (!stripe.checkout?.sessions) {
     throw httpError("Stripe no configurado", 503);
   }
 
-  const base = frontendBaseUrl();
+  const base = frontendBaseUrl().replace(/\/$/, "");
   const successUrl =
     typeof body?.successUrl === "string"
       ? body.successUrl
-      : `${base}/dashboard?multa=${encodeURIComponent(multa.id)}&payment=success`;
+      : `${base}/?resume=${encodeURIComponent(multa.id)}&payment=success`;
   const cancelUrl =
     typeof body?.cancelUrl === "string"
       ? body.cancelUrl
-      : `${base}/dashboard?multa=${encodeURIComponent(multa.id)}&payment=cancel`;
+      : `${base}/?resume=${encodeURIComponent(multa.id)}&payment=cancel`;
 
+  const priceData = stripeDischargePriceData();
+  const checkoutLocale = stripeCheckoutSessionLocale();
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     line_items: [
       {
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: "MultaCheck discharge report",
-          },
-          unit_amount: 1000,
-        },
+        price_data: priceData,
         quantity: 1,
       },
     ],
@@ -105,7 +271,9 @@ export async function createDischargeCheckoutFlow(auth, multaId, body = {}) {
     metadata: {
       multaId: multa.id,
       tenantId: auth.tenantId,
+      country: multa.country ?? "AR",
     },
+    ...(checkoutLocale ? { locale: checkoutLocale } : {}),
   });
 
   await prisma.multa.update({
@@ -113,10 +281,19 @@ export async function createDischargeCheckoutFlow(auth, multaId, body = {}) {
     data: {
       stripeCheckoutSessionId: session.id,
       traceCheckoutAt: new Date(),
+      caseState: CaseState.PAYMENT_PENDING,
     },
   });
 
-  return { url: session.url, sessionId: session.id };
+  const refreshed = await prisma.multa.findUnique({
+    where: { id: multa.id },
+  });
+
+  return {
+    url: session.url,
+    sessionId: session.id,
+    ...toCaseStateOnlyResponse(refreshed),
+  };
 }
 
 export async function getPaymentStatusFlow(auth, multaId) {
@@ -126,9 +303,8 @@ export async function getPaymentStatusFlow(auth, multaId) {
   }
 
   return {
-    paid: multa.paid,
-    paymentStatus: multa.paymentStatus,
-    stripeCheckoutSessionId: multa.stripeCheckoutSessionId,
+    success: true,
+    data: toCaseStateOnlyResponse(multa),
   };
 }
 
@@ -138,12 +314,7 @@ export async function getMultaStateFlow(auth, multaId) {
     throw httpError("Multa no encontrada", 404);
   }
 
-  return {
-    id: multa.id,
-    lifecycleState: multa.lifecycleState,
-    paid: multa.paid,
-    paymentStatus: multa.paymentStatus,
-  };
+  return toMultaStatePublic(multa);
 }
 
 export async function getMultaFullStateFlow(auth, multaId) {
@@ -152,7 +323,10 @@ export async function getMultaFullStateFlow(auth, multaId) {
     throw httpError("Multa no encontrada", 404);
   }
 
-  return multa;
+  return {
+    ...toCaseStateOnlyResponse(multa),
+    ...stripLegacyDbFields(multa),
+  };
 }
 
 export async function getDischargeFlow(auth, multaId) {
@@ -161,9 +335,30 @@ export async function getDischargeFlow(auth, multaId) {
     throw httpError("Multa no encontrada", 404);
   }
 
+  const cs = normalizeCaseState(multa.caseState, multa);
+
+  if (cs !== CaseState.DISCHARGE_READY && cs !== CaseState.DISCHARGED) {
+    throw httpError("Informe no disponible: caso no listo para descarga", 403);
+  }
+
+  const body = multa.dischargeBody;
+  if (body == null || String(body).length === 0) {
+    throw httpError("Informe aún no generado", 404);
+  }
+
+  if (cs === CaseState.DISCHARGE_READY) {
+    await prisma.multa.update({
+      where: { id: multa.id },
+      data: { caseState: CaseState.DISCHARGED },
+    });
+  }
+
+  const refreshed = await prisma.multa.findUnique({
+    where: { id: multa.id },
+  });
+
   return {
-    dischargeBody: multa.dischargeBody,
-    paid: multa.paid,
-    paymentStatus: multa.paymentStatus,
+    dischargeBody: body,
+    ...toCaseStateOnlyResponse(refreshed),
   };
 }

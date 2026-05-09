@@ -1,5 +1,6 @@
 import {
   createMultaFlow,
+  analyzeAnonymousFlow,
   createDischargeCheckoutFlow,
   getPaymentStatusFlow,
   getMultaStateFlow,
@@ -22,6 +23,10 @@ function sendServiceError(res, err, logTag) {
  */
 export async function createMulta(req, res) {
   try {
+    if (!req.auth) {
+      const result = await analyzeAnonymousFlow(req.body);
+      return res.status(200).json(result);
+    }
     const result = await createMultaFlow(
       req.auth,
       req.body,
@@ -33,7 +38,7 @@ export async function createMulta(req, res) {
   }
 }
 
-/** Alias for POST /multa/analyze */
+/** POST /multa/analyze — con JWT + tenant persiste; sin JWT solo vista previa. */
 export const analyze = createMulta;
 
 export async function createDischargeCheckout(req, res) {

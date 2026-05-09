@@ -43,3 +43,9 @@ export async function attachTenantContext(req, res, next) {
     next(err);
   }
 }
+
+/** Solo resuelve tenant si ya hay `req.auth` (p. ej. tras JWT opcional). */
+export function attachTenantContextIfAuthenticated(req, res, next) {
+  if (!req.auth) return next();
+  return attachTenantContext(req, res, next).catch(next);
+}

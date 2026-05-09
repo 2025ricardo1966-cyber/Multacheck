@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.jsx";
+import "../styles/system-auth.css";
 
 const LAST_TENANT_SLUG_KEY = "multacheck_last_tenant_slug";
 
@@ -31,46 +32,43 @@ export default function Login() {
   };
 
   return (
-    <div style={{ padding: 20, fontFamily: "Arial" }}>
-      <h2>Ingresar</h2>
-      <form onSubmit={submit}>
-        <input
-          type="text"
-          autoComplete="organization"
-          placeholder="Slug de empresa (ej. demo)"
-          value={tenantSlug}
-          onChange={(e) => setTenantSlug(e.target.value.trim().toLowerCase())}
-          required
-        />
-        <br />
-        <input
-          type="email"
-          autoComplete="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <br />
-        <input
-          type="password"
-          autoComplete="current-password"
-          placeholder="Contraseña"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <br />
-        <button type="submit" disabled={busy}>
-          {busy ? "…" : "Entrar"}
-        </button>
-      </form>
-      {error ? (
-        <p style={{ color: "crimson", fontSize: 13 }}>{error}</p>
-      ) : null}
-      <p style={{ fontSize: 13 }}>
-        <Link to="/register">Crear cuenta</Link>
-      </p>
+    <div className="sys-auth-page">
+      <div className="sys-auth-card">
+        <h1>Ingresar</h1>
+        <form className="sys-auth-form" onSubmit={submit}>
+          <input
+            type="text"
+            autoComplete="organization"
+            placeholder="Slug de empresa (ej. demo)"
+            value={tenantSlug}
+            onChange={(e) => setTenantSlug(e.target.value.trim().toLowerCase())}
+            required
+          />
+          <input
+            type="email"
+            autoComplete="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            autoComplete="current-password"
+            placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button type="submit" disabled={busy}>
+            {busy ? "…" : "Entrar"}
+          </button>
+        </form>
+        {error ? <p className="sys-auth-error">{error}</p> : null}
+        <p className="sys-auth-footer">
+          <Link to="/register">Crear cuenta</Link>
+        </p>
+      </div>
     </div>
   );
 }

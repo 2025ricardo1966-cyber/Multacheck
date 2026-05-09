@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { fetchMultaFullState } from "../services/index.js";
+import {
+  CaseState,
+  dischargeAvailableFromCaseState,
+} from "../constants/caseState.js";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -25,16 +29,15 @@ export default function MultaResumePage() {
 
     (async () => {
       try {
-        const res = await fetchMultaFullState(multaId);
-        const row = res?.data;
+        const row = await fetchMultaFullState(multaId);
         if (cancelled) return;
 
-        if (!row?.multaId) {
+        if (!row?.multaId && !row?.id) {
           navigate("/", { replace: true });
           return;
         }
 
-        if (row.lifecycleState === "ERROR_STATE") {
+        if (row.caseState === CaseState.FAILED) {
           navigate("/", {
             replace: true,
             state: {
@@ -45,7 +48,9 @@ export default function MultaResumePage() {
           return;
         }
 
-        if (row.paid === true && row.dischargeAvailable === true) {
+        const dischargeOk = dischargeAvailableFromCaseState(row.caseState);
+
+        if (dischargeOk) {
           navigate(`/descargo/${multaId}`, { replace: true });
           return;
         }

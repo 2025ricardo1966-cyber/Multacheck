@@ -43,7 +43,7 @@ const row = await prisma.multa.findUnique({
     userId: true,
     requestHash: true,
     idempotencyKey: true,
-    lifecycleState: true,
+    caseState: true,
     rawInput: true,
     country: true,
     type: true,

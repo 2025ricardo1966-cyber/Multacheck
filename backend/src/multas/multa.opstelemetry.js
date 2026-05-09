@@ -1,6 +1,8 @@
 import { createMultaOpsEvent } from "./multa.ops.persistence.js";
-
-const PAYMENT_STATUS_PAID = "paid";
+import {
+  normalizeCaseState,
+  isPaidCaseState,
+} from "./multaCaseState.js";
 
 /** Eventos de auditoría operativa (JSON en consola + fila en DB). */
 export const MultaOpsEventName = Object.freeze({
@@ -74,9 +76,9 @@ export function detectMultaInvariantViolations(multa) {
   const violations = [];
   if (!multa) return violations;
 
+  const cs = normalizeCaseState(multa.caseState, multa);
   const hasReport = Boolean(multa.dischargeBody?.length);
-  const paidConfirmed =
-    multa.paid === true && multa.paymentStatus === PAYMENT_STATUS_PAID;
+  const paidConfirmed = isPaidCaseState(cs);
 
   if (hasReport && !paidConfirmed) {
     violations.push({
@@ -85,12 +87,7 @@ export function detectMultaInvariantViolations(multa) {
     });
   }
 
-  if (
-    paidConfirmed &&
-    !hasReport &&
-    (multa.lifecycleState === "REPORT_READY" ||
-      multa.lifecycleState === "PAID_CONFIRMED")
-  ) {
+  if (paidConfirmed && !hasReport) {
     violations.push({
       code: "PAID_NO_REPORT_BODY",
       severity: "critical",

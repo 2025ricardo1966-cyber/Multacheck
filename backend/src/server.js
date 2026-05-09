@@ -1,4 +1,4 @@
-import { PORT } from "./config/env.js";
+import { PORT, OFFICIAL_API_PORT } from "./config/env.js";
 import app from "./app.js";
 
 function assertEnv() {
@@ -34,8 +34,16 @@ const server = app.listen(PORT, LISTEN_HOST);
 
 server.once("listening", () => {
   console.log(
-    `API MultaCheck en http://localhost:${PORT}/api (escuchando ${LISTEN_HOST}:${PORT})`
+    `API MultaCheck en http://localhost:${PORT}/api (puerto oficial local ${OFFICIAL_API_PORT}; escuchando ${LISTEN_HOST}:${PORT})`
   );
+  if (
+    PORT !== OFFICIAL_API_PORT &&
+    process.env.NODE_ENV !== "production"
+  ) {
+    console.warn(
+      `[MultaCheck] PORT=${PORT} ≠ ${OFFICIAL_API_PORT}: alineá proxy frontend (.vite), MULTACHECK_API y Stripe webhook forward al mismo puerto.`
+    );
+  }
 });
 
 server.once("error", (err) => {

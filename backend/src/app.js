@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import billingWebhookRouter from "./billing/webhook.routes.js";
 import apiRoutes from "./routes/index.js";
+import { initSentry, sentryErrorHandler } from "./config/sentry.js";
+import { webhookLimiter } from "./middleware/rateLimits.js";
 
 /** Export CJS + import ESM: asegurar factory real (evita `listen` ausente). */
 const createApplication =
@@ -13,6 +15,8 @@ if (typeof createApplication !== "function") {
 }
 
 const app = createApplication();
+
+initSentry(app);
 
 const frontendOrigin = process.env.FRONTEND_URL?.trim();
 
@@ -33,11 +37,14 @@ app.use(
 
 app.use(
   "/api/billing/webhook",
+  webhookLimiter,
   express.raw({ type: "application/json" }),
   billingWebhookRouter
 );
 
 app.use(express.json());
 app.use("/api", apiRoutes);
+
+sentryErrorHandler(app);
 
 export default app;

@@ -1,0 +1,76 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "BACKEND",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": "test",
+      "runOptions": {
+        "reevaluateOnRerun": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": false,
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "FRONTEND",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": "build",
+      "runOptions": {
+        "reevaluateOnRerun": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": false,
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "FULLSTACK",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "runOptions": {
+        "reevaluateOnRerun": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": false,
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "MC: START ALL",
+      "dependsOn": [
+        "BACKEND",
+        "FRONTEND"
+      ],
+      "dependsOrder": "parallel"
+    }
+  ]
+}

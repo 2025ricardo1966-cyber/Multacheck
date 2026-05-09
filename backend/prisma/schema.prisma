@@ -86,9 +86,10 @@ model Multa {
   label                   String?
   trafficLight            String?
   idempotencyKey          String?   @unique
-  lifecycleState          String    @default("ANALYZED")
-  paid                    Boolean   @default(false)
-  paymentStatus           String?
+  caseState               String    @default("ANALYZED")
+  lifecycleState          String    @default("ANALYZED") /// @deprecated No usar en lógica ni API; legado DB
+  paid                    Boolean   @default(false) /// @deprecated No usar en lógica ni API; legado DB
+  paymentStatus           String? /// @deprecated No usar en lógica ni API; legado DB
   dischargeBody           String?
   stripeCheckoutSessionId String?   @unique
   stripePaymentIntentId   String?
@@ -109,6 +110,7 @@ model Multa {
   @@index([tenantId])
   @@index([userId])
   @@index([requestHash])
+  @@index([caseState])
 }
 
 model MultaOpsEvent {

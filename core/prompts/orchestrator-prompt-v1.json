@@ -1,0 +1,38 @@
+{
+  "STEP": "PIPELINE_ORCHESTRATOR_PROMPT_V1",
+  "version": "1.0.0",
+  "system_prompt_en_file": "orchestrator-system-v1.txt",
+  "role": "system",
+  "layers": [
+    {
+      "order": 1,
+      "name": "Signal Extraction",
+      "prompt_file": "signal-extraction-system-v1.txt"
+    },
+    {
+      "order": 2,
+      "name": "Normalization",
+      "prompt_file": "normalization-layer-system-v1.txt"
+    },
+    {
+      "order": 3,
+      "name": "Rule Engine",
+      "prompt_file": "rule-engine-system-v1.txt"
+    },
+    {
+      "order": 4,
+      "name": "Output Formatter",
+      "notes": "Maps evaluation JSON + optional branding fields into final_result; no new scoring."
+    }
+  ],
+  "step_outputs_mapping": {
+    "signals": "STEP 1 strict JSON (signals array + global_confidence + data_quality_flags)",
+    "normalized": "STEP 2 strict JSON (canonical infraction shape)",
+    "evaluation": "STEP 3 strict JSON (full rule engine output including rules_applied + explanation)"
+  },
+  "failure_behavior": {
+    "pipeline_status": "failed",
+    "error": "human-readable reason + optional machine code",
+    "trace": "includes last completed step prefix before failure"
+  }
+}

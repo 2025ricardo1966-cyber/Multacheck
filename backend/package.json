@@ -13,7 +13,12 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "deploy": "node scripts/deploy.mjs",
+    "test:critical": "node tests/critical.test.mjs",
+    "test:pipeline": "tsx src/ai/pipeline.test.ts",
+    "build:ai": "shx rm -rf dist/ai && tsc",
+    "test:ai": "npm run build:ai && node -e \"import('./src/ai/index.js').then(m => m.analyzeWithAI({ raw: 'test AR transito' })).then(console.log)\""
   },
   "prisma": {
     "seed": "node prisma/seed.mjs"
@@ -23,16 +28,23 @@
   "license": "ISC",
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "@sentry/node": "^10.52.0",
+    "axios": "^1.16.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.5.1",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.1.1",
+    "openai": "^6.37.0",
     "stripe": "^22.1.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "prisma": "^6.19.3"
+    "prisma": "^6.19.3",
+    "shx": "^0.4.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   }
 }

@@ -1,0 +1,16 @@
+{
+  "STEP": "NORMALIZATION_LAYER_PROMPT_V1",
+  "version": "1.0.0",
+  "system_prompt_en_file": "normalization-layer-system-v1.txt",
+  "role": "system",
+  "pipeline_position": "after SIGNAL_EXTRACTION_PROMPT_V1; before RULE_ENGINE_PROMPT_V1",
+  "input_contract": {
+    "raw": "text | OCR text | API payload | PDF-extracted text",
+    "signals_optional": "output shape from signal-extraction-system-v1.txt"
+  },
+  "notes": [
+    "`financial.amount` should use minor currency units when policy requires precision elsewhere; if unknown use null with confidence 0 (never invent amounts).",
+    "`temporal.event_date` ISO-8601; use date-only or full instant per availability.",
+    "Internal canonical schema `multacheck.infraction.v1` may extend this shape — map fields determinístically in application code when migrating."
+  ]
+}

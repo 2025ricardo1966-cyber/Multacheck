@@ -1,0 +1,99 @@
+/* Capa sistema (auth): neutra, sin activos ni estética del producto MultaCheck. */
+
+.sys-auth-page {
+  min-height: 100vh;
+  margin: 0;
+  background: #e5e7eb;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  box-sizing: border-box;
+}
+
+.sys-auth-card {
+  width: 100%;
+  max-width: 400px;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 28px 24px 26px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.sys-auth-card h1 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 20px;
+  color: #111827;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.sys-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sys-auth-form input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #fff;
+  color: #111827;
+}
+
+.sys-auth-form input:focus {
+  outline: none;
+  border-color: #6b7280;
+  box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.2);
+}
+
+.sys-auth-form button[type="submit"] {
+  margin-top: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: #374151;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.sys-auth-form button[type="submit"]:hover:not(:disabled) {
+  background: #4b5563;
+}
+
+.sys-auth-form button[type="submit"]:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.sys-auth-error {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: #b91c1c;
+}
+
+.sys-auth-footer {
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.sys-auth-footer a {
+  color: #2563eb;
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+.sys-auth-footer a:hover {
+  color: #1d4ed8;
+}

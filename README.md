@@ -35,21 +35,16 @@ Definidos en `backend/src/plans/plan.config.js` (montos Stripe solo por variable
 
 ```
 MultaCheck proyecto/
-├── backend/           # Express + Prisma + JWT
-│   ├── prisma/        # schema + migraciones + seed
-│   └── src/
-│       ├── auth/      # registro, login, JWT middleware
-│       ├── billing/   # Stripe checkout, portal, webhook
-│       ├── plans/     # definición de planes y límites
-│       ├── usage/     # cuotas diarias + middleware checkAnalyzeQuota
-│       ├── audit/     # registro de acciones
-│       ├── multas/    # análisis + persistencia + listado
-│       ├── users/     # acceso a usuarios
-│       └── routes/
-├── frontend/          # Vite + React + rutas protegidas
-├── docker-compose.yml # Postgres local opcional
-├── render.yaml        # Opcional: blueprint Render (backend)
-└── package.json       # npm run dev (concurrently)
+├── backend/           # Express + Prisma + JWT (API /api)
+│   ├── prisma/        # schema, migraciones, seed
+│   └── src/           # (incluye src/core JS de dominio tenant — no confundir con /core TS en raíz)
+├── frontend/          # ÚNICO cliente web: Vite + React (puerto 5173)
+├── core/              # Motor de análisis TypeScript (no es servidor UI)
+├── scripts/           # Chequeos de contrato, smoke E2E motor
+├── docker-compose.yml
+├── render.yaml
+├── DEV-RUN-MATRIX.md  # Matriz de terminales y frontend único
+└── package.json       # npm run dev → backend + frontend
 ```
 
 ## Variables de entorno
