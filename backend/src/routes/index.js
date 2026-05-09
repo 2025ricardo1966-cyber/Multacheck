@@ -21,6 +21,34 @@ router.use("/auth/login", authLimiter);
 router.use("/auth/register", authLimiter);
 router.use(authRoutes);
 
+/**
+ * @swagger
+ * /multa/analyze:
+ *   post:
+ *     summary: Analiza una multa de tránsito
+ *     tags: [Multas]
+ *     description: JWT opcional; sin token devuelve vista previa anónima.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               country:
+ *                 type: string
+ *                 example: AR
+ *               type:
+ *                 type: string
+ *                 example: exceso_velocidad
+ *               description:
+ *                 type: string
+ *               amount:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Análisis completado
+ */
 // analyzeLimiter va después del JWT opcional para poder limitar por usuario.
 router.post(
   "/multa/analyze",

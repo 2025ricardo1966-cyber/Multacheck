@@ -1,4 +1,6 @@
 import { analyzeWithAI } from "../ai/index.js";
+import { logAI } from "../config/logger.js";
+import { analysisCache } from "../infra/redisCache.js";
 import ollamaClient from "./ollamaclient.js";
 import { applyCountryRules } from "../rules/countryrules.js";
 import { calculateScore } from "../scoring/scoringengine.js";
@@ -195,6 +197,14 @@ ${JSON.stringify(multaData)}
   return aiAnalysis;
 }
 
+function shouldCacheAnalysisResult(result) {
+  return (
+    result &&
+    typeof result === "object" &&
+    (!("success" in result) || result.success !== false)
+  );
+}
+
 /**
  * Análisis multa: flujo único; IA es opcional; reglas locales siempre aplican.
  */
@@ -202,6 +212,11 @@ export async function processMulta(multaData) {
   try {
     if (!multaData) {
       throw new Error("No se recibieron datos de multa");
+    }
+
+    const cached = await analysisCache.get(multaData);
+    if (cached) {
+      return cached;
     }
 
     const pipelineInput = {
@@ -220,24 +235,46 @@ export async function processMulta(multaData) {
         .trim(),
     };
 
+    const start = Date.now();
     const aiResult = await analyzeWithAI(pipelineInput);
+    const duration = Date.now() - start;
+
+    const mid =
+      multaData.case_id ??
+      multaData.multaId ??
+      multaData.id ??
+      undefined;
+
     if (aiResult) {
-      console.log("🤖 Usando pipeline AI");
-      return convertAIFormat(aiResult);
+      logAI("openai", duration, true, {
+        multaId: mid,
+        score: aiResult.final_score,
+      });
+      const out = convertAIFormat(aiResult);
+      if (shouldCacheAnalysisResult(out)) await analysisCache.set(multaData, out);
+      return out;
     }
+
+    logAI("javascript", duration, true, { multaId: mid });
 
     const aiAnalysis = await resolveGravedadWithOptionalAi(multaData);
 
     try {
-      return buildResultFromAiAnalysis(multaData, aiAnalysis);
+      const out = buildResultFromAiAnalysis(multaData, aiAnalysis);
+      if (shouldCacheAnalysisResult(out)) await analysisCache.set(multaData, out);
+      return out;
     } catch (err) {
       multaFlowLog("ANALYSIS_PIPELINE_FALLBACK", { message: err.message });
-      return buildResultFromAiAnalysis(multaData, { gravedad: "media" });
+      const out = buildResultFromAiAnalysis(multaData, { gravedad: "media" });
+      if (shouldCacheAnalysisResult(out)) await analysisCache.set(multaData, out);
+      return out;
     }
   } catch (error) {
     multaFlowLog("ANALYSIS_FATAL_FALLBACK", { message: error.message });
     try {
-      return buildResultFromAiAnalysis(multaData, { gravedad: "media" });
+      const out = buildResultFromAiAnalysis(multaData, { gravedad: "media" });
+      if (shouldCacheAnalysisResult(out)) await analysisCache.set(multaData, out);
+      return out;
     } catch (e2) {
       return {
         success: false,

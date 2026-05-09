@@ -36,15 +36,16 @@ export async function getHealth(_req, res) {
     checks.ai = "javascript";
   }
 
-  const allOk = Object.values(checks).every(
-    (v) => v === "ok" || v === "configured" || v === "javascript"
-  );
-
   const version =
     process.env.npm_package_version?.trim() || APP_VERSION;
 
-  res.status(allOk ? 200 : 503).json({
-    status: allOk ? "healthy" : "degraded",
+  /** DB ok ⇒ healthy para smoke/E2E; integraciones opcionales en `checks`. */
+  const httpStatus = checks.database === "error" ? 503 : 200;
+  const overall =
+    checks.database === "error" ? "unhealthy" : "healthy";
+
+  res.status(httpStatus).json({
+    status: overall,
     checks,
     timestamp: new Date().toISOString(),
     version,

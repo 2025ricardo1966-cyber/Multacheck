@@ -137,13 +137,23 @@ function parseModelJsonObject(content: string | null | undefined): Record<string
   }
 }
 
+export type PromptUsage = {
+  prompt_tokens: number;
+  completion_tokens: number;
+};
+
+export type ExecutePromptResult = {
+  data: Record<string, unknown>;
+  usage: PromptUsage;
+};
+
 /**
  * Single combined message (instructions + input) → OpenAI → parsed JSON object only.
  */
 export async function executePrompt(
   prompt: string,
   input: unknown
-): Promise<Record<string, unknown>> {
+): Promise<ExecutePromptResult> {
   const client = getOpenAIClient();
   const combinedContent = buildCombinedPromptPayload(prompt, input);
 
@@ -154,8 +164,15 @@ export async function executePrompt(
     messages: [{ role: "user", content: combinedContent }],
   });
 
+  const u = completion.usage;
+  const usage: PromptUsage = {
+    prompt_tokens: u?.prompt_tokens ?? 0,
+    completion_tokens: u?.completion_tokens ?? 0,
+  };
+
   const content = completion.choices[0]?.message?.content;
-  return parseModelJsonObject(content);
+  const data = parseModelJsonObject(content);
+  return { data, usage };
 }
 
 export function resolveCaseId(raw: PipelineInput): string {
@@ -173,31 +190,46 @@ export function resolveCaseId(raw: PipelineInput): string {
 /**
  * End-to-end pipeline: signal extraction → normalization → rule engine via OpenAI.
  */
+function mergeUsage(
+  aggregate: PromptUsage,
+  next: PromptUsage
+): void {
+  aggregate.prompt_tokens += next.prompt_tokens;
+  aggregate.completion_tokens += next.completion_tokens;
+}
+
 export async function runMultachekPipeline(
   input: PipelineInput
 ): Promise<Record<string, unknown>> {
   let signalsJson: SignalsJson | null = null;
   let normalizedJson: CanonicalInfractionJson | null = null;
+  const usageTotal: PromptUsage = {
+    prompt_tokens: 0,
+    completion_tokens: 0,
+  };
 
   try {
-    const signalsRaw = await executePrompt(SIGNAL_EXTRACTOR_PROMPT_V1, input);
-    signalsJson = signalsRaw as unknown as SignalsJson;
+    const r1 = await executePrompt(SIGNAL_EXTRACTOR_PROMPT_V1, input);
+    mergeUsage(usageTotal, r1.usage);
+    signalsJson = r1.data as unknown as SignalsJson;
     console.log("[pipeline] step 1 signal extraction result:", JSON.stringify(signalsJson, null, 2));
 
-    const normRaw = await executePrompt(NORMALIZATION_PROMPT_V1, {
+    const r2 = await executePrompt(NORMALIZATION_PROMPT_V1, {
       raw: input,
       signals: signalsJson,
     } satisfies NormalizationPipelineInput);
-    normalizedJson = normRaw as unknown as CanonicalInfractionJson;
+    mergeUsage(usageTotal, r2.usage);
+    normalizedJson = r2.data as unknown as CanonicalInfractionJson;
     console.log("[pipeline] step 2 normalization result:", JSON.stringify(normalizedJson, null, 2));
 
-    const evaluationRaw = await executePrompt(
-      RULE_ENGINE_PROMPT_V1,
-      normalizedJson
-    );
-    console.log("[pipeline] step 3 rule engine result:", JSON.stringify(evaluationRaw, null, 2));
+    const r3 = await executePrompt(RULE_ENGINE_PROMPT_V1, normalizedJson);
+    mergeUsage(usageTotal, r3.usage);
+    console.log("[pipeline] step 3 rule engine result:", JSON.stringify(r3.data, null, 2));
 
-    return evaluationRaw;
+    return {
+      ...r3.data,
+      _usage: usageTotal,
+    };
   } catch (err) {
     const caseId = signalsJson?.case_id ?? resolveCaseId(input);
     const errorPayload: ErrorHandlerPayload = {
@@ -209,8 +241,12 @@ export async function runMultachekPipeline(
         evaluation: null,
       },
     };
-    const recovered = await executePrompt(ERROR_HANDLER_PROMPT_V1, errorPayload);
-    console.log("[pipeline] error handler result:", JSON.stringify(recovered, null, 2));
-    return recovered;
+    const rErr = await executePrompt(ERROR_HANDLER_PROMPT_V1, errorPayload);
+    mergeUsage(usageTotal, rErr.usage);
+    console.log("[pipeline] error handler result:", JSON.stringify(rErr.data, null, 2));
+    return {
+      ...rErr.data,
+      _usage: usageTotal,
+    };
   }
 }
