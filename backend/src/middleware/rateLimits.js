@@ -1,10 +1,5 @@
 import rateLimit from "express-rate-limit";
-
-function clientIp(req) {
-  const xf = req.headers?.["x-forwarded-for"];
-  if (typeof xf === "string" && xf.length) return xf.split(",")[0].trim();
-  return req.ip ?? "unknown";
-}
+import { clientIp } from "./clientIp.js";
 
 // Análisis: 10 por hora por usuario autenticado; si no hay JWT, por IP.
 export const analyzeLimiter = rateLimit({

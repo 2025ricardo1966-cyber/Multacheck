@@ -10,6 +10,7 @@ import {
 import multaRoutes from "../multas/multa.routes.js";
 import { analyze } from "../multas/multa.controller.js";
 import { analyzeLimiter, authLimiter } from "../middleware/rateLimits.js";
+import billingRoutes from "../billing/billing.routes.js";
 import healthRoutes from "./health.routes.js";
 
 const router = Router();
@@ -63,6 +64,7 @@ protectedRouter.use(authenticateJWT);
 protectedRouter.use(attachTenantContext);
 protectedRouter.get("/auth/me", authController.me);
 protectedRouter.post("/auth/logout", authController.logout);
+protectedRouter.use(billingRoutes);
 protectedRouter.use(multaRoutes);
 
 router.use(protectedRouter);

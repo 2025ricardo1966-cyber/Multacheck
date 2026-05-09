@@ -75,6 +75,15 @@ assert(analyze.ok && multa.success && multa.data?.multaId, `❌ Análisis falla:
 multaId = multa.data.multaId;
 console.log("✅ Análisis funciona");
 
+const stripeReady = healthJson.checks?.stripe === "configured";
+if (!stripeReady) {
+  console.log(
+    "⚠️ Omitiendo checkout Stripe (`checks.stripe` ≠ configured en /health)."
+  );
+  console.log("\n🎉 Tests críticos pasaron (core OK; Stripe no configurado)\n");
+  process.exit(0);
+}
+
 // Test 4: Checkout de pago (respuesta real: { url, sessionId, multaId, ... }, sin wrapper success/data)
 // Requiere STRIPE_SECRET_KEY en el servidor y en este proceso si usás Stripe real.
 const checkout = await fetch(`${API}/multa/${multaId}/discharge-checkout`, {

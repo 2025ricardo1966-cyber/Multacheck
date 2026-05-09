@@ -9,6 +9,8 @@ import {
   allowsAnalyzeTransition,
   allowsCheckoutTransition,
 } from "./multaCaseState.js";
+import { normalizeAnalyzeInput } from "./infractionNormalization.js";
+import { publishDomainEvent } from "../application/domainEvents.port.js";
 
 /**
  * Contrato mínimo de estado en TODAS las respuestas multa (siempre incluido).
@@ -42,7 +44,7 @@ function stripeDischargePriceData() {
   return {
     currency,
     product_data: {
-      name: "MultaCheck discharge report",
+      name: "Informe de descargo MultaCheck",
     },
     unit_amount: amount,
   };
@@ -58,6 +60,40 @@ function httpError(message, statusCode = 500) {
   const err = new Error(message);
   err.statusCode = statusCode;
   return err;
+}
+
+async function invokeProcessMulta(multaData, modeLabel) {
+  const t0 = Date.now();
+  publishDomainEvent({
+    module_source: "multa.pipeline",
+    type: "process_multa.enter",
+    payload: { mode: modeLabel },
+  });
+  try {
+    const analysis = await processMulta(multaData);
+    publishDomainEvent({
+      module_source: "multa.pipeline",
+      type: "process_multa.exit",
+      payload: {
+        mode: modeLabel,
+        duration_ms: Date.now() - t0,
+        outcome: "ok",
+      },
+    });
+    return analysis;
+  } catch (e) {
+    publishDomainEvent({
+      module_source: "multa.pipeline",
+      type: "process_multa.exit",
+      severity_level: "error",
+      payload: {
+        mode: modeLabel,
+        duration_ms: Date.now() - t0,
+        outcome: "error",
+      },
+    });
+    throw e;
+  }
 }
 
 /** Salida plana del pipeline AI (`convertAIFormat`) o legacy `{ success, data }` desde motor JS. */
@@ -133,13 +169,9 @@ function stripLegacyDbFields(multa) {
  * Vista previa sin persistencia ni tenant — mismo motor `processMulta` que el analyze autenticado.
  */
 export async function analyzeAnonymousFlow(body) {
-  const multaData = {
-    country: body?.country ?? "AR",
-    type: body?.type ?? "transito",
-    description: String(body?.description ?? "").trim(),
-  };
+  const { multaData } = normalizeAnalyzeInput(body ?? {});
 
-  const analysis = await processMulta(multaData);
+  const analysis = await invokeProcessMulta(multaData, "anonymous_preview");
   const { trafficLight, label, preview } = fieldsFromProcessMulta(analysis);
 
   return {
@@ -165,7 +197,8 @@ export async function createMultaFlow(auth, body, options = {}) {
   const prevCs = normalizeCaseState(multaRow.caseState, multaRow);
   const shouldSetAnalyzed = allowsAnalyzeTransition(prevCs);
 
-  const multaData = {
+  const mergedBody = {
+    ...body,
     country: body?.country ?? multaRow.country ?? "AR",
     type: body?.type ?? multaRow.type ?? "transito",
     description:
@@ -173,8 +206,9 @@ export async function createMultaFlow(auth, body, options = {}) {
       multaRow.description ||
       "",
   };
+  const { multaData } = normalizeAnalyzeInput(mergedBody);
 
-  const analysis = await processMulta(multaData);
+  const analysis = await invokeProcessMulta(multaData, "persisted_analyze");
   const { trafficLight, label, preview } = fieldsFromProcessMulta(analysis);
 
   const updated = await prisma.multa.update({
@@ -211,7 +245,7 @@ export async function createMultaFlow(auth, body, options = {}) {
         {
           price_data: {
             currency: priceData.currency,
-            product_data: { name: "MultaCheck Service" },
+            product_data: { name: "Servicio MultaCheck (informe de descargo)" },
             unit_amount: priceData.unit_amount,
           },
           quantity: 1,

@@ -1,17 +1,20 @@
-const BASE_RULES = {
-    estacionamiento: 30,
-    velocidad: 50,
-    semaforo: 70,
-    otros: 20
-  };
-  
-  const GRAVEDAD_BONUS = {
-    baja: -10,
-    media: 0,
-    alta: 20
-  };
-  
-  export function calculateScore(multaData, aiAnalysis) {
+/** Versión del manifiesto de reglas (informes de deriva / comparador). */
+export const SCORING_ENGINE_MANIFEST_VERSION = "1.0.0";
+
+export const BASE_RULES = Object.freeze({
+  estacionamiento: 30,
+  velocidad: 50,
+  semaforo: 70,
+  otros: 20,
+});
+
+export const GRAVEDAD_BONUS = Object.freeze({
+  baja: -10,
+  media: 0,
+  alta: 20,
+});
+
+export function calculateScore(multaData, aiAnalysis) {
     const tipo = multaData.type || "otros";
     const gravedad = aiAnalysis.gravedad || "media";
   

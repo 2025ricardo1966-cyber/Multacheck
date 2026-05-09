@@ -29,6 +29,10 @@ export function buildExplanation(multaData, aiAnalysis, baseScore, finalScore, i
     } else {
       explanation.push("No se detectaron inconsistencias");
     }
+
+    explanation.push(
+      "Información orientativa de MultaCheck; no reemplaza asesoramiento profesional ni dictamen jurídico."
+    );
   
     return explanation;
   }

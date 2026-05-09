@@ -15,8 +15,8 @@ const POLL_MS = 2500;
 const POLL_MAX_ATTEMPTS = 60;
 
 const WAIT_CYCLE = [
-  "Confirming payment…",
-  "Preparing your Legal Defense Report…",
+  "Confirmando el pago…",
+  "Generando tu informe de defensa administrativa…",
 ];
 
 const UUID_RE =
@@ -75,14 +75,14 @@ export default function DescargoPage() {
   const [err, setErr] = useState(() =>
     idOk
       ? ""
-      : "Invalid link. Return home and run diagnosis again."
+      : "Enlace inválido. Volvé al inicio y repetí el diagnóstico."
   );
   const [pollKey, setPollKey] = useState(0);
   const [waitIdx, setWaitIdx] = useState(0);
 
   const waitMessage =
     phase === "generating"
-      ? "Loading your Legal Defense Report…"
+      ? "Cargando tu informe de defensa administrativa…"
       : WAIT_CYCLE[waitIdx % WAIT_CYCLE.length];
 
   useEffect(() => {
@@ -139,7 +139,7 @@ export default function DescargoPage() {
           if (cs === CaseState.FAILED) {
             if (!cancelled) {
               setErr(
-                "We’re reviewing this case. Return home and try diagnosis again shortly."
+                "Estamos revisando este caso. Volvé al inicio y reintentá el diagnóstico en unos minutos."
               );
               setPhase("error");
             }
@@ -163,7 +163,7 @@ export default function DescargoPage() {
           if (cancelled) return;
           if (ex.response?.status === 404) {
             setErr(
-              "Report not found or no access. Sign in with the correct account."
+              "No encontramos el informe o no tenés acceso. Iniciá sesión con la cuenta correcta."
             );
             setPhase("error");
             return;
@@ -175,7 +175,7 @@ export default function DescargoPage() {
 
       if (!cancelled) {
         setErr(
-          "Payment not confirmed in time. If you were charged, wait and tap Retry."
+          "No confirmamos el pago a tiempo. Si ya te debitaron, esperá y tocá Reintentar."
         );
         setPhase("timeout");
       }
@@ -199,7 +199,7 @@ export default function DescargoPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `legal-defense-report-${multaId}.txt`;
+    a.download = `informe-defensa-multacheck-${multaId}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -260,14 +260,14 @@ export default function DescargoPage() {
               borderRadius: 10,
             }}
           >
-            Retry
+            Reintentar
           </button>
           <button
             type="button"
             onClick={() => navigate("/", { replace: true })}
             style={{ ...textLink, display: "block", marginTop: 8 }}
           >
-            Back
+            Volver
           </button>
         </>
       ) : null}
@@ -307,15 +307,15 @@ export default function DescargoPage() {
               fontStyle: "italic",
             }}
           >
-            Informational only—not binding legal advice.
+            Solo información orientativa; no reemplaza asesoramiento jurídico profesional.
           </p>
           <p style={{ margin: "14px 0 0", fontSize: 13, color: "#64748b" }}>
             <button type="button" onClick={() => void copyReport()} style={textLink}>
-              Copy
+              Copiar
             </button>
             <span style={{ margin: "0 10px", color: "#cbd5e1" }}>|</span>
             <button type="button" onClick={downloadReport} style={textLink}>
-              Download
+              Descargar
             </button>
           </p>
         </>
@@ -338,7 +338,7 @@ export default function DescargoPage() {
             borderRadius: 10,
           }}
         >
-          Back
+          Volver
         </button>
       ) : phase === "error" ? (
         <button
@@ -351,7 +351,7 @@ export default function DescargoPage() {
             fontWeight: 600,
           }}
         >
-          Back
+          Volver
         </button>
       ) : null}
     </div>

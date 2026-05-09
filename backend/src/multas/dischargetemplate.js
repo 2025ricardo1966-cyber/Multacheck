@@ -1,6 +1,6 @@
 /**
- * Legal Defense Report — single-shot template (no external calls).
- * Traffic light semantics are normalized here for report copy only.
+ * Informe de defensa administrativa — plantilla determinística (sin llamadas externas).
+ * Los valores del semáforo se normalizan acá solo para el texto del informe.
  */
 
 const LIGHT = Object.freeze({
@@ -33,53 +33,58 @@ function classificationExplanation(light) {
   switch (light) {
     case LIGHT.GREEN:
       return [
-        "The indicators associated with this matter suggest that an administrative challenge (impugnación) may be a reasonable avenue to explore,",
-        "subject to applicable deadlines, jurisdiction-specific rules, and the completeness of the evidentiary file.",
-        "This assessment is probabilistic; it does not predict how the competent authority will rule.",
+        "Los indicadores asociados a este expediente sugieren que explorar una impugnación administrativa puede ser un camino razonable,",
+        "siempre sujeto a los plazos aplicables, a las normas de la jurisdicción y a la completitud del legajo probatorio.",
+        "Esta valoración es probabilística; no anticipa cómo resolverá la autoridad competente.",
       ].join(" ");
     case LIGHT.YELLOW:
       return [
-        "The indicators suggest material legal uncertainty: relevant facts, formal requirements, or procedural issues may be open",
-        "and could materially affect the outcome once the file is examined in depth.",
-        "This assessment is indicative only and does not substitute for a review of primary sources and local norms.",
+        "Los indicadores muestran incertidumbre jurídica relevante: hechos, requisitos formales o aspectos procesales pueden encontrarse abiertos",
+        "y afectar materialmente el resultado cuando el expediente se examine en profundidad.",
+        "Esta apreciación es orientativa y no reemplaza el análisis de fuentes primarias ni de la normativa local.",
       ].join(" ");
     case LIGHT.RED:
     default:
       return [
-        "The indicators suggest a comparatively high likelihood that the enforcement action would be found substantively and formally valid",
-        "under ordinary administrative standards, absent unusual documentary or procedural circumstances.",
-        "This is not a prediction of outcome; authorities retain discretion and individual cases may vary.",
+        "Los indicadores sugieren una probabilidad comparativamente alta de que la actuación fiscalizadora sea considerada válida en sustancia y en forma",
+        "según estándares administrativos ordinarios, salvo circunstancias documentales o procesales excepcionales.",
+        "No constituye una predicción de resultado; la autoridad conserva margen de decisión y los casos pueden variar.",
       ].join(" ");
   }
 }
 
 function riskBullets(light, multa) {
-  const typeLabel = sanitizeParagraph(multa.type ?? "traffic-related", 120) || "traffic-related";
+  const typeLabel =
+    sanitizeParagraph(multa.type ?? "infracción de tránsito", 120) ||
+    "infracción de tránsito";
+  const jurisdiccion =
+    sanitizeParagraph(multa.country ?? "la jurisdicción indicada", 80) ||
+    "la jurisdicción indicada";
   const base = [
-    `The alleged violation category (${typeLabel}) frames which deadlines, defenses, and evidentiary burdens typically apply in ${sanitizeParagraph(multa.country ?? "the stated jurisdiction", 80)}.`,
+    `La categoría de la presunta infracción (${typeLabel}) suele encuadrar los plazos, las defensas admisibles y las cargas probatorias típicas en ${jurisdiccion}.`,
   ];
   switch (light) {
     case LIGHT.GREEN:
       return [
         ...base,
-        "Formal or substantive irregularities sometimes arise in comparable files; whether they apply here depends on the full record and governing rules.",
-        "Procedural timing (notifications, service, and appeal windows) may materially affect available remedies.",
-        "Even where grounds exist, authorities may still weigh policy, proportionality, and evidentiary strength.",
+        "En expedientes comparables a veces aparecen irregularidades formales o sustanciales; si aplican aquí depende del legajo completo y de las normas vigentes.",
+        "Los tiempos procesales (notificaciones, emplazamientos y ventanas de recurso o impugnación) pueden condicionar fuertemente los remedios disponibles.",
+        "Incluso cuando existan fundamentos, la autoridad puede ponderar políticas públicas, proporcionalidad y fuerza probatoria.",
       ];
     case LIGHT.YELLOW:
       return [
         ...base,
-        "Key facts may remain disputed or underspecified until additional documentation is filed or clarified with the authority.",
-        "The balance between negotiated resolution and formal challenge often turns on risk tolerance and cost considerations.",
-        "Outcome sensitivity typically increases where norms grant discretion or where mixed evidence is expected.",
+        "Los hechos centrales pueden seguir discutidos o incompletos hasta presentar documentación adicional o aclarar el expediente ante la autoridad.",
+        "La decisión entre una salida negociada y un planteo formal suele depender de tolerancia al riesgo y de costos razonables.",
+        "La sensibilidad del resultado aumenta cuando la normativa otorga discreción o cuando se espera evidencia mixta.",
       ];
     case LIGHT.RED:
     default:
       return [
         ...base,
-        "Where validity indicators predominate, voluntary regularization within legal deadlines may reduce penalties, interest, or ancillary costs where the regime allows.",
-        "A formal challenge may still be available in principle, but its expected marginal benefit should be weighed against time and expense.",
-        "Any residual uncertainty should be addressed through qualified counsel with access to the complete file.",
+        "Cuando predominan indicadores de validez, la regularización voluntaria dentro de los plazos legales puede reducir multas, intereses o costos accesorios cuando el régimen lo permite.",
+        "En principio puede contemplarse un planteo formal, pero conviene ponderar el beneficio marginal esperado frente a tiempo y gasto.",
+        "Cualquier duda residual debería revisarse con asesoramiento profesional con acceso al expediente íntegro.",
       ];
   }
 }
@@ -88,56 +93,56 @@ function suggestedAction(light) {
   switch (light) {
     case LIGHT.GREEN:
       return [
-        "Suggested direction: prioritize evaluating a formal administrative challenge (impugnación), after confirming non-waivable deadlines and admissible evidence under local rules.",
-        "Where appropriate, parallel preparation of a negotiated clarification with the authority may be considered; it does not replace analysis of challenge viability.",
+        "Orientación sugerida: priorizar evaluar una impugnación administrativa formal, previa confirmación de plazos no dispensables y de la prueba admisible según las reglas locales.",
+        "Cuando corresponda, puede contemplarse en paralelo una aclaración negociada con la autoridad; eso no sustituye el análisis de viabilidad del planteo.",
       ].join("\n\n");
     case LIGHT.YELLOW:
       return [
-        "Suggested direction: consider obtaining or organizing missing documentation, then reassessing between (i) a structured negotiation with the authority and (ii) a formal challenge, depending on how facts crystallize.",
-        "Proceed incrementally; avoid irreversible procedural elections until material uncertainties are reduced.",
+        "Orientación sugerida: obtener u ordenar la documentación faltante y recién después definir entre (i) una salida consensuada con la administración y (ii) un planteo formal, según cómo se consoliden los hechos.",
+        "Avanzar por etapas; evitar decisiones procesales irreversibles mientras subsistan incertidumbres materiales.",
       ].join("\n\n");
     case LIGHT.RED:
     default:
       return [
-        "Suggested direction: where proportionate under applicable rules, payment or voluntary regularization within statutory deadlines may be comparatively efficient.",
-        "If a challenge is contemplated, it should be framed narrowly around documented irregularities or exceptional circumstances, with realistic expectations about standards of review.",
+        "Orientación sugerida: si resulta proporcionado según las normas aplicables, el pago o la regularización voluntaria dentro de los plazos legales suele ser relativamente eficiente.",
+        "Si se evalúa un planteo, conviene fundarlo de manera acotada en irregularidades documentadas o circunstancias excepcionales, con expectativas realistas sobre el estándar de revisión.",
       ].join("\n\n");
   }
 }
 
 function summaryOfCase(multa) {
-  const country = sanitizeParagraph(multa.country ?? "", 80) || "not specified";
-  const type = sanitizeParagraph(multa.type ?? "", 120) || "unspecified";
+  const country = sanitizeParagraph(multa.country ?? "", 80) || "sin especificar";
+  const type = sanitizeParagraph(multa.type ?? "", 120) || "sin especificar";
   const raw = multa.rawInput ?? multa.description ?? "";
   const detail = sanitizeParagraph(raw, 900);
 
   if (detail.length > 0) {
     return [
-      `This matter concerns an alleged ${type} violation in ${country}.`,
-      `The user-provided narrative, in substance, is as follows: ${detail}`,
-      "The summary is descriptive only and may require corroboration in any formal proceeding.",
+      `El expediente refiere una presunta infracción tipo «${type}» en ${country}.`,
+      `La narrativa aportada por el usuario, en sustancia, es la siguiente: ${detail}`,
+      "Este resumen es meramente descriptivo y puede requerir corroboración en cualquier trámite formal.",
     ].join(" ");
   }
   return [
-    `This matter concerns an alleged ${type} violation in ${country}.`,
-    "The factual narrative available at generation time is limited; any formal strategy should be updated once primary documents and notifications are assembled.",
+    `El expediente refiere una presunta infracción tipo «${type}» en ${country}.`,
+    "La información fáctica disponible al momento de generar el informe es acotada; conviene actualizar la estrategia cuando se reúnan actuaciones y notificaciones primarias.",
   ].join(" ");
 }
 
 function disclaimer() {
   return [
-    "Disclaimer",
+    "Aviso legal",
     "",
-    "This Legal Defense Report is informational and educational. It does not constitute legal advice, does not create an attorney-client relationship,",
-    "and must not be read as a guarantee, prediction, or assurance of any specific administrative or judicial outcome.",
-    "Laws, regulations, and administrative practice change and vary by jurisdiction; qualified local counsel should review the complete file before any decision.",
-    "MultaCheck provides probabilistic orientation only; the competent authority decides the case.",
+    "Este informe tiene carácter informativo y educativo. No constituye asesoramiento jurídico ni genera relación abogado-cliente",
+    "y no debe interpretarse como garantía, predicción ni aseguramiento de un resultado administrativo o judicial determinado.",
+    "Las leyes, reglamentos y prácticas administrativas cambian y varían según jurisdicción; conviene que un profesional matriculado revise el expediente completo antes de decidir.",
+    "MultaCheck brinda orientación probabilística; la decisión definitiva corresponde a la autoridad competente.",
   ].join(" ");
 }
 
 /**
- * Builds the persisted Legal Defense Report body (plain text).
- * Structure and section order are invariant across matters.
+ * Arma el cuerpo persistido del informe de descargo (texto plano).
+ * La estructura y el orden de secciones son invariantes.
  *
  * @param {import("@prisma/client").Multa | Record<string, unknown>} multa
  */
@@ -150,24 +155,24 @@ export function buildDischargeText(multa) {
   const country = sanitizeParagraph(multa.country ?? "", 80) || "—";
 
   const sections = [
-    "Legal Defense Report",
+    "Informe de defensa administrativa",
     "",
-    "Header",
-    `Title: Legal Defense Report`,
-    `Multa ID: ${multa.id}`,
-    `Country: ${country}`,
+    "Encabezado",
+    `Título: Informe de defensa administrativa`,
+    `ID de expediente MultaCheck: ${multa.id}`,
+    `País / jurisdicción: ${country}`,
     "",
-    "Summary of Case",
+    "Resumen del caso",
     summaryOfCase(multa),
     "",
-    "Legal Classification",
-    `Signal: ${light}`,
+    "Clasificación jurídica orientativa",
+    `Semáforo orientativo: ${light}`,
     classificationExplanation(light),
     "",
-    "Risk Assessment",
+    "Evaluación de riesgos",
     ...riskBullets(light, multa).map((b) => `• ${b}`),
     "",
-    "Suggested Action",
+    "Orientación sugerida",
     suggestedAction(light),
     "",
     disclaimer(),

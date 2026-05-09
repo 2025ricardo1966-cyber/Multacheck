@@ -1,14 +1,25 @@
+import crypto from "node:crypto";
 import { analyzeWithAI } from "../ai/index.js";
 import { logAI } from "../config/logger.js";
 import { analysisCache } from "../infra/redisCache.js";
 import ollamaClient from "./ollamaclient.js";
 import { applyCountryRules } from "../rules/countryrules.js";
 import { calculateScore } from "../scoring/scoringengine.js";
+import {
+  observeEngineTrace,
+  driftMonitorSnapshot,
+} from "../scoring/driftMonitor.js";
+import { buildPipelineExplainability } from "../scoring/pipelineExplain.js";
+import { appendScoringAuditRecord } from "../scoring/scoringAuditLog.js";
 import { detectInconsistencies } from "../core/inconsistencydetector.js";
 import { buildExplanation } from "../core/explainer.js";
 import { detectAppealOpportunity } from "../core/appealdetector.js";
 import { classifyRisk } from "../core/riskclassifier.js";
 import { multaFlowLog } from "../multas/multa.debuglog.js";
+
+function scoringTraceEnabled() {
+  return process.env.MULTACHECK_SCORING_TRACE?.trim() === "1";
+}
 
 /**
  * Semáforo legal MVP (única definición de reglas en el backend).
@@ -22,18 +33,21 @@ function computeLegalTrafficLightFromPreview(preview) {
   if (score >= 62) {
     return {
       trafficLight: "RED",
-      label: "Payment likely required based on enforcement standards",
+      label:
+        "Según parámetros habituales de fiscalización, es probable que corresponda abonar o regularizar dentro de los plazos legales.",
     };
   }
   if ((appealRecommended && score <= 48) || (issues >= 1 && score <= 55)) {
     return {
       trafficLight: "GREEN",
-      label: "Strong grounds for challenge",
+      label:
+        "Hay margen razonable para evaluar una impugnación u otro planteo ante la administración, según plazos y normativa local.",
     };
   }
   return {
     trafficLight: "YELLOW",
-    label: "Case-dependent legal outcome",
+    label:
+      "El resultado depende del expediente concreto y de la normativa aplicable; conviene revisar documentación y plazos.",
   };
 }
 
@@ -109,6 +123,52 @@ function buildResultFromAiAnalysis(multaData, aiAnalysisIn) {
 
   const risk = classifyRisk(finalScore);
 
+  /** Explicabilidad / traza del motor (solo con MULTACHECK_SCORING_TRACE=1). */
+  let scoringExplainability = null;
+  if (scoringTraceEnabled()) {
+    scoringExplainability = buildPipelineExplainability({
+      multaData,
+      aiAnalysis,
+      trusted,
+      baseScoreRaw,
+      baseScore,
+      finalScore,
+      country,
+    });
+    observeEngineTrace({ steps: scoringExplainability.engineTrace });
+
+    const requestHash = crypto
+      .createHash("sha256")
+      .update(
+        JSON.stringify({
+          country: multaData.country,
+          type: multaData.type,
+          description: multaData.description,
+          gravedad: aiAnalysis.gravedad,
+          manifestVersion: scoringExplainability.manifestVersion,
+        })
+      )
+      .digest("hex");
+
+    const auditLine = {
+      requestHash,
+      manifestVersion: scoringExplainability.manifestVersion,
+      parityOk: scoringExplainability.parityEngineVsCanonical,
+      firedRuleIds: scoringExplainability.engineTrace
+        .filter((s) => s.fired)
+        .map((s) => s.ruleId),
+      baseScoreRaw,
+      baseScore,
+      finalScore,
+      country,
+      driftMonitorAtWrite: driftMonitorSnapshot(),
+    };
+    if (process.env.MULTACHECK_SCORING_AUDIT_FULL?.trim() === "1") {
+      auditLine.explainability = scoringExplainability;
+    }
+    appendScoringAuditRecord(auditLine);
+  }
+
   const preview = {
     input: {
       country,
@@ -130,6 +190,9 @@ function buildResultFromAiAnalysis(multaData, aiAnalysisIn) {
     meta: {
       issues,
       explanation,
+      ...(scoringExplainability
+        ? { scoringExplainability }
+        : {}),
     },
   };
 

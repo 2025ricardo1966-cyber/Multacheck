@@ -7,6 +7,11 @@ import {
   getMultaFullStateFlow,
   getDischargeFlow,
 } from "./multa.service.js";
+import {
+  runAnalyzeHttpOrchestration,
+  maybeSetOrchestratorReplayHeader,
+} from "../infra/requestOrchestrator/httpAnalyzeOrchestrator.js";
+import { publishDomainEvent } from "../application/domainEvents.port.js";
 
 function sendServiceError(res, err, logTag) {
   const status = err.statusCode ?? 500;
@@ -22,18 +27,42 @@ function sendServiceError(res, err, logTag) {
  * =========================================================
  */
 export async function createMulta(req, res) {
+  const t0 = Date.now();
+  publishDomainEvent({
+    module_source: "multa.http",
+    type: "multa.http.analyze.enter",
+    payload: { authenticated: !!req.auth },
+  });
   try {
-    if (!req.auth) {
-      const result = await analyzeAnonymousFlow(req.body);
-      return res.status(200).json(result);
+    async function runAnalyzeBusiness() {
+      if (!req.auth) {
+        return analyzeAnonymousFlow(req.body);
+      }
+      return createMultaFlow(req.auth, req.body, req.body?.options || {});
     }
-    const result = await createMultaFlow(
-      req.auth,
-      req.body,
-      req.body?.options || {}
-    );
-    return res.status(200).json(result);
+
+    const out = await runAnalyzeHttpOrchestration(req, runAnalyzeBusiness);
+    maybeSetOrchestratorReplayHeader(res, out);
+    publishDomainEvent({
+      module_source: "multa.http",
+      type: "multa.http.analyze.exit",
+      payload: {
+        duration_ms: Date.now() - t0,
+        outcome: "ok",
+        orchestrator_kind: out.kind,
+      },
+    });
+    return res.status(out.status).json(out.body);
   } catch (err) {
+    publishDomainEvent({
+      module_source: "multa.http",
+      type: "multa.http.analyze.exit",
+      severity_level: "error",
+      payload: {
+        duration_ms: Date.now() - t0,
+        outcome: "error",
+      },
+    });
     return sendServiceError(res, err);
   }
 }

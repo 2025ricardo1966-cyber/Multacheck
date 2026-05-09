@@ -1,0 +1,46 @@
+{
+  "$schema_comment": "Reglas del security edge (opt-in MULTACHECK_SECURITY_GATEWAY=1). Patrones conservadores para limitar falsos positivos.",
+  "maxJsonDepth": 24,
+  "maxStringLength": 120000,
+  "maxObjectKeysPerLevel": 200,
+  "stringPatterns": [
+    {
+      "id": "null_byte",
+      "description": "Null byte en texto",
+      "pattern": "\u0000"
+    },
+    {
+      "id": "xss_script_tag_open",
+      "description": "Etiqueta script (XSS típico)",
+      "pattern": "<\\s*script\\b"
+    },
+    {
+      "id": "xss_script_tag_close",
+      "description": "Cierre script",
+      "pattern": "<\\s*/\\s*script\\s*>"
+    },
+    {
+      "id": "xss_javascript_uri",
+      "description": "URI javascript:",
+      "pattern": "javascript\\s*:"
+    },
+    {
+      "id": "xss_event_handler",
+      "description": "Event handler inline HTML",
+      "pattern": "on\\w+\\s*="
+    },
+    {
+      "id": "nosql_where_operator",
+      "description": "Operador Mongo $where en cadena",
+      "pattern": "\\$where\\b"
+    }
+  ],
+  "routeAllowlistPrefixes": [
+    "/health",
+    "/version",
+    "/admin",
+    "/auth",
+    "/multa",
+    "/billing"
+  ]
+}

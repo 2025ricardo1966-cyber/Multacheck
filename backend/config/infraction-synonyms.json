@@ -1,0 +1,38 @@
+{
+  "$schema": "multacheck/infraction-synonyms/v1",
+  "canonicalViolations": {
+    "SPEEDING": [
+      "exceso_velocidad",
+      "exceso de velocidad",
+      "exceso velocidad",
+      "velocidad",
+      "speeding",
+      "radar",
+      "fotomulta",
+      "photo radar"
+    ],
+    "PARKING_VIOLATION": [
+      "estacionamiento",
+      "estacionamiento prohibido",
+      "estacionamiento en zona prohibida",
+      "parking",
+      "doble fila",
+      "prohibido estacionar",
+      "mal estacionado"
+    ],
+    "RED_LIGHT": [
+      "semaforo",
+      "semáforo",
+      "luz roja",
+      "cruce en rojo",
+      "red light",
+      "avance indebido"
+    ]
+  },
+  "scoringTypeByCanonical": {
+    "SPEEDING": "velocidad",
+    "PARKING_VIOLATION": "estacionamiento",
+    "RED_LIGHT": "semaforo",
+    "OTHER": "otros"
+  }
+}

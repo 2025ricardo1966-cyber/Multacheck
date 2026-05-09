@@ -1,0 +1,258 @@
+{
+  "$schema_note": "Registro de gobernanza: defaults legacy = capas de extensión DESACTIVADAS (unset o distinto de \"1\" salvo que indique otro valor).",
+  "version": "1",
+  "legacyBaseline": "Sin MULTACHECK_SECURITY_GATEWAY, MULTACHECK_HTTP_ORCHESTRATOR ni MULTACHECK_TELEMETRY activos = comportamiento histórico del API.",
+  "categories": ["gateway", "orchestrator", "telemetry", "scoring_observability", "platform", "gateway_tuning", "ci_deploy"],
+
+  "flags": [
+    {
+      "envKey": "MULTACHECK_SECURITY_GATEWAY",
+      "category": "gateway",
+      "legacyDefault": "off",
+      "activation": "1",
+      "description": "Edge HTTP endurecido bajo /api (rate limit + scan JSON)."
+    },
+    {
+      "envKey": "MULTACHECK_GATEWAY_AUDIT",
+      "category": "gateway",
+      "legacyDefault": "off",
+      "activation": "1",
+      "description": "JSONL de auditoría del gateway."
+    },
+    {
+      "envKey": "MULTACHECK_GATEWAY_AUDIT_PATH",
+      "category": "gateway",
+      "legacyDefault": "unset",
+      "activation": "path",
+      "description": "Ruta alternativa del audit log."
+    },
+    {
+      "envKey": "MULTACHECK_GATEWAY_ROUTE_ALLOWLIST",
+      "category": "gateway",
+      "legacyDefault": "off",
+      "activation": "1",
+      "description": "Solo rutas con prefijos permitidos en reglas JSON."
+    },
+    {
+      "envKey": "MULTACHECK_GATEWAY_ADAPTIVE_THRESHOLD",
+      "category": "gateway_tuning",
+      "legacyDefault": "5",
+      "activation": "number",
+      "description": "Incidentes de seguridad por IP antes de bloqueo adaptativo."
+    },
+    {
+      "envKey": "MULTACHECK_GATEWAY_ADAPTIVE_WINDOW_MS",
+      "category": "gateway_tuning",
+      "legacyDefault": "900000",
+      "activation": "number",
+      "description": "Ventana de conteo adaptativo (ms)."
+    },
+    {
+      "envKey": "MULTACHECK_GATEWAY_ADAPTIVE_BLOCK_MS",
+      "category": "gateway_tuning",
+      "legacyDefault": "900000",
+      "activation": "number",
+      "description": "Duración bloqueo adaptativo (ms)."
+    },
+    {
+      "envKey": "MULTACHECK_GATEWAY_API_KEYS",
+      "category": "gateway",
+      "legacyDefault": "unset",
+      "activation": "comma_list",
+      "description": "API keys internas para cuota por clave."
+    },
+    {
+      "envKey": "MULTACHECK_GATEWAY_BURST_WINDOW_MS",
+      "category": "gateway_tuning",
+      "legacyDefault": "60000",
+      "activation": "number",
+      "description": "Ventana ráfaga rate limit."
+    },
+    {
+      "envKey": "MULTACHECK_GATEWAY_BURST_MAX",
+      "category": "gateway_tuning",
+      "legacyDefault": "80",
+      "activation": "number",
+      "description": "Máx solicitudes ráfaga por IP."
+    },
+    {
+      "envKey": "MULTACHECK_GATEWAY_KEY_BURST_MAX",
+      "category": "gateway_tuning",
+      "legacyDefault": "400",
+      "activation": "number",
+      "description": "Máx ráfaga si hay API key válida."
+    },
+    {
+      "envKey": "MULTACHECK_GATEWAY_SUSTAINED_WINDOW_MS",
+      "category": "gateway_tuning",
+      "legacyDefault": "900000",
+      "activation": "number",
+      "description": "Ventana sostenida."
+    },
+    {
+      "envKey": "MULTACHECK_GATEWAY_SUSTAINED_MAX",
+      "category": "gateway_tuning",
+      "legacyDefault": "2000",
+      "activation": "number",
+      "description": "Máx sostenido por IP."
+    },
+    {
+      "envKey": "MULTACHECK_GATEWAY_KEY_SUSTAINED_MAX",
+      "category": "gateway_tuning",
+      "legacyDefault": "12000",
+      "activation": "number",
+      "description": "Máx sostenido por API key."
+    },
+
+    {
+      "envKey": "MULTACHECK_HTTP_ORCHESTRATOR",
+      "category": "orchestrator",
+      "legacyDefault": "off",
+      "activation": "1",
+      "description": "Idempotencia HTTP analyze + cache replay con Idempotency-Key."
+    },
+    {
+      "envKey": "MULTACHECK_IDEMPOTENCY_TTL_SEC",
+      "category": "orchestrator",
+      "legacyDefault": "86400",
+      "activation": "number",
+      "description": "TTL cache orchestrator (segundos)."
+    },
+    {
+      "envKey": "MULTACHECK_ORCHESTRATOR_AUDIT",
+      "category": "orchestrator",
+      "legacyDefault": "off",
+      "activation": "1",
+      "description": "JSONL auditoría orchestrator."
+    },
+    {
+      "envKey": "MULTACHECK_ORCHESTRATOR_AUDIT_PATH",
+      "category": "orchestrator",
+      "legacyDefault": "unset",
+      "activation": "path",
+      "description": "Ruta audit orchestrator."
+    },
+    {
+      "envKey": "MULTACHECK_ORCHESTRATOR_REPLAY_HEADER",
+      "category": "orchestrator",
+      "legacyDefault": "off",
+      "activation": "1",
+      "description": "Cabecera CORS + X-MultaCheck-Idempotent-Replayed."
+    },
+
+    {
+      "envKey": "MULTACHECK_TELEMETRY",
+      "category": "telemetry",
+      "legacyDefault": "off",
+      "activation": "1",
+      "description": "Telemetría JSONL + métricas/anomalías."
+    },
+    {
+      "envKey": "MULTACHECK_TELEMETRY_JSONL_PATH",
+      "category": "telemetry",
+      "legacyDefault": "logs/telemetry-core.jsonl",
+      "activation": "path",
+      "description": "Sink JSONL telemetría."
+    },
+    {
+      "envKey": "MULTACHECK_TELEMETRY_PINO_MIRROR",
+      "category": "telemetry",
+      "legacyDefault": "off",
+      "activation": "1",
+      "description": "Espejo eventos en logger Pino."
+    },
+    {
+      "envKey": "MULTACHECK_TELEMETRY_LATENCY_SPIKE_MULT",
+      "category": "telemetry",
+      "legacyDefault": "5",
+      "activation": "number",
+      "description": "Multiplicador umbral pico latencia process_multa."
+    },
+    {
+      "envKey": "MULTACHECK_TELEMETRY_LATENCY_WINDOW",
+      "category": "telemetry",
+      "legacyDefault": "50",
+      "activation": "number",
+      "description": "Muestras rolling latencia."
+    },
+
+    {
+      "envKey": "MULTACHECK_SCORING_TRACE",
+      "category": "scoring_observability",
+      "legacyDefault": "off",
+      "activation": "1",
+      "description": "Traza decisión en motor JS (no cambia score)."
+    },
+    {
+      "envKey": "MULTACHECK_SCORING_AUDIT_PATH",
+      "category": "scoring_observability",
+      "legacyDefault": "unset",
+      "activation": "path",
+      "description": "Ruta scoring-audit.jsonl."
+    },
+    {
+      "envKey": "MULTACHECK_SCORING_AUDIT_FULL",
+      "category": "scoring_observability",
+      "legacyDefault": "off",
+      "activation": "1",
+      "description": "Auditoría scoring extendida."
+    },
+
+    {
+      "envKey": "MULTACHECK_TRUST_PROXY",
+      "category": "platform",
+      "legacyDefault": "off",
+      "activation": "1",
+      "description": "Express trust proxy para IP correcta detrás de proxy."
+    },
+    {
+      "envKey": "MULTACHECK_AUTO_INCREMENT_PORT",
+      "category": "platform",
+      "legacyDefault": "off",
+      "activation": "1",
+      "description": "Buscar puerto libre si PORT ocupado."
+    },
+    {
+      "envKey": "MULTACHECK_AUTO_INCREMENT_MAX",
+      "category": "platform",
+      "legacyDefault": "10",
+      "activation": "number",
+      "description": "Saltos máximos de puerto."
+    },
+    {
+      "envKey": "MULTACHECK_NORMALIZATION_LOG",
+      "category": "scoring_observability",
+      "legacyDefault": "off",
+      "activation": "1",
+      "description": "Log extra normalización infracciones."
+    },
+
+    {
+      "envKey": "MULTACHECK_RUN_DEPLOY_GATE",
+      "category": "ci_deploy",
+      "legacyDefault": "off",
+      "activation": "1",
+      "description": "Si está en 1, scripts/deploy.mjs ejecuta npm run deploy:gate antes del deploy."
+    },
+    {
+      "envKey": "MULTACHECK_DEPLOY_GATE_STRICT_SCORING",
+      "category": "ci_deploy",
+      "legacyDefault": "off",
+      "activation": "1",
+      "description": "Fallar gate si existe scoring-audit.jsonl con parityFailures>0."
+    },
+    {
+      "envKey": "MULTACHECK_GATE_INCLUDE_CRITICAL",
+      "category": "ci_deploy",
+      "legacyDefault": "off",
+      "activation": "1",
+      "description": "Incluir npm run test:critical en deploy:gate (API debe estar accesible, ej. CRITICAL_TEST_API)."
+    }
+  ],
+
+  "rollback": {
+    "primary": "Quitar o desactivar flags MULTACHECK_* de capas nuevas y reiniciar el proceso (variables leídas al arranque). Sin cambio de código.",
+    "secondary": "Revertir commit / fijar imagen Docker o tag git anterior y redeploy.",
+    "instant_layers_off": "MULTACHECK_SECURITY_GATEWAY=0, MULTACHECK_HTTP_ORCHESTRATOR=0, MULTACHECK_TELEMETRY=0 (unset o cualquier valor distinto de 1 según readers del código)."
+  }
+}

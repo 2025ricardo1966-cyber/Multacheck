@@ -25,6 +25,7 @@ RULES:
 5. Always include confidence per field.
 6. Missing values must be null (never omitted).
 7. Output must be deterministic JSON only.
+8. If jurisdiction.country is missing or ambiguous, lower jurisdiction.confidence and do not infer United States or other jurisdictions without textual evidence from input.
 
 NORMALIZATION TASKS:
 - Identify jurisdiction (country/region/city)

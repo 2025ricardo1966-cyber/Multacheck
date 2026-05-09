@@ -8,6 +8,34 @@ import { ERROR_HANDLER_PROMPT_V1 } from "./errorHandler.prompt.js";
 const PIPELINE_MODEL = "gpt-4o-mini";
 const PIPELINE_TEMPERATURE = 0.2;
 
+/**
+ * Restricción determinística: texto legible por personas va en español (Argentina).
+ * Las claves JSON y literales enumerados del esquema permanecen en inglés.
+ */
+const MULTACHEK_OUTPUT_LANGUAGE_POLICY = `
+LANGUAGE AND LOCALIZATION (MANDATORY):
+- Keep every JSON object key exactly as specified in the instructions below (English key names).
+- Keep enumerated machine literals exactly as allowed by the schema (for example decision codes, recovery_strategy tokens, error categories).
+- Write every human-readable string value intended for people (including each rules_applied[].reason, each explanation[] entry, error.error.message, each data_quality_flags[] item, and any descriptive prose inside string fields) in Spanish as used in Argentina (es-AR), with neutral legal-administrative tone suitable for traffic infraction matters under Argentine administrative practice.
+- Do not write legal reasoning or explanatory sentences for end users in English.
+- Do not mix English and Spanish inside the same string value.
+- Values in signals[].type may remain English snake_case tokens when they denote machine-readable signal identifiers rather than full sentences for users.
+`.trim();
+
+/**
+ * Límites de seguridad jurídica y foco jurisdiccional (Argentina como referencia principal).
+ * Instrucciones meta en inglés; las cadenas destinadas al usuario siguen la política de idioma.
+ */
+const MULTACHEK_LEGAL_SAFETY_AND_JURISDICTION_POLICY = `
+LEGAL SAFETY AND JURISDICTION (MANDATORY):
+- Primary operational context is traffic/administrative enforcement with Argentina (AR) as the default reference jurisdiction when the input does not clearly specify another country.
+- Use Argentina-compatible administrative vocabulary in Spanish user-facing strings (impugnación, recurso administrativo, expediente, actuación fiscalizadora, notificación). Avoid US-centric legal framing unless it appears verbatim in user-supplied input.
+- Never invent statutes, decrees, resolutions, article numbers, case citations, court or tribunal names, agency procedures, concrete deadlines, or governmental steps not explicitly present in the input JSON.
+- Never guarantee outcomes, certainty of winning/losing, or foolproof procedures. Numeric scores (including appeal_success_probability and similar) are heuristic internal orientation only, not predictions of authority decisions.
+- Never present the output as formal legal advice, attorney-client guidance, or an official administrative filing.
+- If data is missing or confidence is low, reflect that with cautious wording in Spanish in the appropriate string fields; avoid definitive legal conclusions.
+`.trim();
+
 type PipelineInput = unknown;
 
 export type SignalsJson = {
@@ -110,6 +138,12 @@ function buildCombinedPromptPayload(prompt: string, input: unknown): string {
     "",
     "--- MULTACHEK_SYSTEM_INSTRUCTIONS ---",
     prompt.trim(),
+    "",
+    "--- MULTACHEK_OUTPUT_LANGUAGE_POLICY ---",
+    MULTACHEK_OUTPUT_LANGUAGE_POLICY,
+    "",
+    "--- MULTACHEK_LEGAL_SAFETY_AND_JURISDICTION_POLICY ---",
+    MULTACHEK_LEGAL_SAFETY_AND_JURISDICTION_POLICY,
     "",
     "--- MULTACHEK_INPUT_JSON ---",
     inputJson,

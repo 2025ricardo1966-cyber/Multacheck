@@ -23,6 +23,12 @@ function run(cmd) {
 async function deploy() {
   console.log("🚀 DEPLOY MULTACHECK\n");
 
+  if (String(process.env.MULTACHECK_RUN_DEPLOY_GATE ?? "").trim() === "1") {
+    console.log("0️⃣ Deploy readiness gate (MULTACHECK_RUN_DEPLOY_GATE=1)...");
+    await run("npm run deploy:gate");
+    console.log("✅ Gate passed\n");
+  }
+
   console.log("1️⃣ Running tests...");
   await run("npm run test:critical");
   console.log("✅ Tests passed\n");

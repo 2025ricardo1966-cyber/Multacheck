@@ -1,0 +1,18 @@
+{
+  "description": "Replay solo lectura: análisis anónimo sin persistir tenant",
+  "steps": [
+    {
+      "method": "GET",
+      "path": "/health"
+    },
+    {
+      "method": "POST",
+      "path": "/multa/analyze",
+      "body": {
+        "country": "AR",
+        "type": "velocidad",
+        "description": "Replay batch texto fijo para hash estable"
+      }
+    }
+  ]
+}

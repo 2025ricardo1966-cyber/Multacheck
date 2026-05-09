@@ -25,6 +25,8 @@ export function createTenantAndUserForRegister({ email, hashedPassword }) {
         email,
         password: hashedPassword,
         tenantId: tenant.id,
+        /** Primer usuario del tenant: debe poder operar facturación SaaS (Stripe checkout/portal). */
+        role: "admin",
         status: "active",
       },
     });

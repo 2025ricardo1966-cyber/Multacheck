@@ -11,13 +11,17 @@ export function detectAppealOpportunity(multaData, aiAnalysis, issues, finalScor
     // 1. Inconsistencias detectadas
     if (issues.length > 0) {
       appeal.recommended = true;
-      appeal.reasons.push("Se detectaron inconsistencias en la evaluación");
+      appeal.reasons.push(
+        "Se registraron posibles inconsistencias en los datos evaluados (valoración orientativa)"
+      );
     }
   
     // 2. Score bajo (posible discutible)
     if (finalScore <= 50) {
       appeal.recommended = true;
-      appeal.reasons.push("La infracción tiene bajo puntaje, posible margen de apelación");
+      appeal.reasons.push(
+        "Puntaje bajo: puede haber margen para evaluar impugnación o recurso administrativo, según el tipo de acto y los plazos locales"
+      );
     }
   
     // 3. Falta de descripción

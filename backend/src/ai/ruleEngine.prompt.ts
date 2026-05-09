@@ -16,6 +16,8 @@ RULES:
 7. Maintain full traceability of all score changes.
 8. Always produce explainable reasoning in human-readable form.
 9. Output must ALWAYS be valid JSON only. No extra text.
+10. Treat risk_profile.appeal_success_probability strictly as a heuristic 0–100 orientation score; in explanation text, describe it as indicative only, never as a guaranteed outcome.
+11. Never cite laws, norms, or authorities unless their identifiers appear explicitly in the input JSON.
 
 SCORING:
 - Start base score at 50

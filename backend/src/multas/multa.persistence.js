@@ -1,6 +1,6 @@
 import { safeTransaction } from "../db/safeTransaction.js";
 import { withAdvisoryLock } from "../db/advisoryLock.js";
-import crypto from "crypto";
+import { buildAnalyzeRequestHash } from "./analyzeCanonical.js";
 import { runWithConcurrencyLock } from "./multa.concurrency.js";
 import prisma from "../db/prisma.js";
 import { buildDischargeText } from "./dischargetemplate.js";
@@ -30,27 +30,7 @@ import { getStripe } from "../billing/stripe.service.js";
  *   In-process lock keyed by tenant:user:requestHash reduces contention.
  */
 
-/**
- * Canonical payload for hashing only. Optional keys omitted when absent.
- * resultJson is intentionally excluded from identity (FINAL DECISION B).
- */
-export function canonicalizeAnalyzeBody(body) {
-  const canonical = {
-    country: String(body?.country ?? "AR"),
-    type: String(body?.type ?? "transito"),
-    description: String(body?.description ?? "").trim(),
-  };
-  if (body?.rawInput != null) canonical.rawInput = body.rawInput;
-  if (body?.label != null) canonical.label = body.label;
-  if (body?.trafficLight != null) canonical.trafficLight = body.trafficLight;
-  return canonical;
-}
-
-/** requestHash = SHA-256 of canonical business body (chaos + @@unique). */
-export function buildAnalyzeRequestHash(body) {
-  const canonical = canonicalizeAnalyzeBody(body);
-  return crypto.createHash("sha256").update(JSON.stringify(canonical)).digest("hex");
-}
+export { canonicalizeAnalyzeBody, buildAnalyzeRequestHash } from "./analyzeCanonical.js";
 
 function buildMultaCreateData(body, { tenantId, userId, requestHash, idempotencyKey }) {
   return {

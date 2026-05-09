@@ -1,0 +1,8 @@
+{
+  "$schema": "multacheck/scoring_baseline_freq/v1",
+  "comment": "Histograma esperado de ruleIds disparados (relativo). Ajustar tras cambios de motor.",
+  "ENGINE_BASE_BY_TYPE": 1,
+  "ENGINE_GRAVEDAD_BONUS": 0,
+  "ENGINE_CTX_PROHIBIDA": 0,
+  "ENGINE_CLAMP_ROUND_0_100": 1
+}
