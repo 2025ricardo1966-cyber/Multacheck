@@ -20,6 +20,8 @@
     "deploy": "node scripts/deploy.mjs",
     "deploy:safe": "node scripts/safe-deploy.mjs",
     "test:critical": "node tests/critical.test.mjs",
+    "test:mvp": "node tests/mvp-flow.test.mjs",
+    "test:mvp:legacy": "node tests/mvp.test.mjs",
     "test:fraudGraphEngine": "node --test tests/fraudGraphEngine.test.mjs",
     "test:infraction": "node --test tests/infractionNormalization.test.mjs",
     "deploy:gate": "node scripts/deploy-readiness-gate.mjs",
