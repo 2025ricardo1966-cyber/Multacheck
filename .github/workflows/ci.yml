@@ -15,6 +15,28 @@ jobs:
     defaults:
       run:
         working-directory: ./backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: multacheck
+          POSTGRES_PASSWORD: multacheck
+          POSTGRES_DB: multacheck_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U multacheck -d multacheck_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://multacheck:multacheck@localhost:5432/multacheck_test?schema=public
+      JWT_SECRET: ci-jwt-secret-minimum-32-characters-long
+      JWT_EXPIRES_IN: 7d
+      NODE_ENV: test
+      APP_MODE: production
+      FRONTEND_URL: http://localhost:5173
+      PORT: 3000
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,11 +48,28 @@ jobs:
           cache: npm
           cache-dependency-path: ./backend/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Backend Tests
+        run: |
+          npm ci
+          npx prisma generate
+          npm run db:migrate
+          npm run test:critical
+          npm run test:mvp
+          npm test
 
-      - name: Generate Prisma client
-        run: npm run db:generate
+      - name: API integration tests
+        run: |
+          npm start &
+          SERVER_PID=$!
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3000/api/health >/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          npm run test:integration
+          npm run test:integration:mvp
+          kill $SERVER_PID || true
 
   frontend:
     name: frontend-ci

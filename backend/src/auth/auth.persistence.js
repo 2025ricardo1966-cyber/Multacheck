@@ -1,14 +1,18 @@
-import prisma from "../db/prisma.js";
 import { safeTransaction } from "../db/safeTransaction.js";
 
-export function createTenantAndUserForRegister({ email, hashedPassword }) {
+export function createTenantAndUserForRegister({
+  email,
+  hashedPassword,
+  companyName,
+  slug,
+}) {
   return safeTransaction(async (tx) => {
     const tier = "FREE";
 
     const tenant = await tx.tenant.create({
       data: {
-        name: `Tenant ${Date.now()}`,
-        slug: `tenant-${Date.now()}`,
+        name: companyName,
+        slug,
         subscriptionTier: tier,
         settings: {
           featureFlags: {},

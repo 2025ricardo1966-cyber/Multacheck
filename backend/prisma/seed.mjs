@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
@@ -8,7 +8,7 @@ async function main() {
   const password = process.env.SEED_ADMIN_PASSWORD ?? "changeme";
   const slug = process.env.SEED_TENANT_SLUG ?? "demo";
 
-  const hash = await bcrypt.hash(password, 12);
+  const hash = await bcrypt.hash(password, 10);
 
   const tenant = await prisma.tenant.upsert({
     where: { slug },

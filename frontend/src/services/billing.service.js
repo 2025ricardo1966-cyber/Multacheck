@@ -2,7 +2,7 @@ import { api } from "./api.js";
 
 export async function fetchPublicPlans() {
   const { data } = await api.get("/plans");
-  return data.plans;
+  return data.data ?? data.plans ?? [];
 }
 
 export async function createCheckoutSession(tier) {

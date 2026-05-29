@@ -10,12 +10,15 @@ import {
 import multaRoutes from "../multas/multa.routes.js";
 import { analyze } from "../multas/multa.controller.js";
 import { analyzeLimiter, authLimiter } from "../middleware/rateLimits.js";
+import { enforceAuthenticatedAnalyzeQuota } from "../usage/usage.middleware.js";
 import billingRoutes from "../billing/billing.routes.js";
+import planRoutes from "../plans/plan.routes.js";
 import healthRoutes from "./health.routes.js";
 
 const router = Router();
 
 router.use(healthRoutes);
+router.use("/plans", planRoutes);
 router.use("/admin", adminRoutes);
 
 router.use("/auth/login", authLimiter);
@@ -55,6 +58,7 @@ router.post(
   "/multa/analyze",
   optionalAuthenticateJWT,
   attachTenantContextIfAuthenticated,
+  enforceAuthenticatedAnalyzeQuota,
   analyzeLimiter,
   analyze
 );

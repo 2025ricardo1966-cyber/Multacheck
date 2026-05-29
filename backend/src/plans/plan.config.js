@@ -51,6 +51,23 @@ export const PLAN_METADATA = Object.freeze({
   },
 });
 
+export const PLAN_PRICING = Object.freeze({
+  free: { priceUsd: 0 },
+  pro: { priceUsd: 9.99 },
+  enterprise: { priceUsd: 99 },
+});
+
+export const PLAN_FEATURES = Object.freeze({
+  free: ["basic_analyze", "daily_quota"],
+  pro: ["advanced_reports", "export_data", "higher_daily_quota"],
+  enterprise: [
+    "beta_features",
+    "advanced_reports",
+    "export_data",
+    "unlimited_analyze",
+  ],
+});
+
 /** Price IDs de Stripe (Dashboard → Products → Price API ID) */
 export function getStripePriceIdForTier(tier) {
   const t = String(tier).toLowerCase();

@@ -30,7 +30,7 @@ async function deploy() {
   }
 
   console.log("1️⃣ Running tests...");
-  await run("npm run test:critical");
+  await run("npm run test:integration");
   console.log("✅ Tests passed\n");
 
   const aiMode = String(process.env.AI_PROVIDER || "")

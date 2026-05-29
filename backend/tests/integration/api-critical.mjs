@@ -1,3 +1,10 @@
+/**
+ * Tests de API en vivo (health → register → analyze [→ checkout si Stripe]).
+ * Requiere servidor + DB. No se ejecutan con `npm run test:critical` (unitarios).
+ *
+ * Uso: npm run test:integration
+ * API: CRITICAL_TEST_API | http://localhost:3000/api
+ */
 import assert from "node:assert/strict";
 
 const API = process.env.CRITICAL_TEST_API?.trim() || "http://localhost:3000/api";
@@ -10,23 +17,19 @@ if (typeof globalThis.fetch !== "function") {
 let token = "";
 let multaId = "";
 
-console.log("🧪 TESTS CRÍTICOS MULTACHECK\n");
+console.log("🧪 TESTS CRÍTICOS MULTACHECK (integración API)\n");
 
 function isConnRefused(err) {
-  return (
-    err?.code === "ECONNREFUSED" ||
-    err?.cause?.code === "ECONNREFUSED"
-  );
+  return err?.code === "ECONNREFUSED" || err?.cause?.code === "ECONNREFUSED";
 }
 
-// Test 1: Servidor vivo
 let health;
 try {
   health = await fetch(`${API}/health`);
 } catch (err) {
   assert.fail(
     isConnRefused(err)
-      ? `❌ Sin servidor en ${API}. Levantá la API (npm run dev) antes de npm run test:critical.`
+      ? `❌ Sin servidor en ${API}. Levantá la API antes de npm run test:integration.`
       : String(err)
   );
 }
@@ -41,14 +44,13 @@ if (health.status === 503) {
 }
 console.log("✅ Servidor vivo");
 
-// Test 2: Registro (respuesta real: { token, user }, sin wrapper success/data)
 const register = await fetch(`${API}/auth/register`, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
     email: `test${Date.now()}@test.com`,
     password: "Test1234!",
-    name: "Test User",
+    companyName: "Test Company",
   }),
 });
 const regData = await register.json();
@@ -56,7 +58,6 @@ assert(register.ok && regData.token, `❌ Registro falla: ${JSON.stringify(regDa
 token = regData.token;
 console.log("✅ Registro funciona");
 
-// Test 3: Análisis de multa (respuesta: { success, data: { multaId, ... } })
 const analyze = await fetch(`${API}/multa/analyze`, {
   method: "POST",
   headers: {
@@ -71,7 +72,10 @@ const analyze = await fetch(`${API}/multa/analyze`, {
   }),
 });
 const multa = await analyze.json();
-assert(analyze.ok && multa.success && multa.data?.multaId, `❌ Análisis falla: ${JSON.stringify(multa)}`);
+assert(
+  analyze.ok && multa.success && multa.data?.multaId,
+  `❌ Análisis falla: ${JSON.stringify(multa)}`
+);
 multaId = multa.data.multaId;
 console.log("✅ Análisis funciona");
 
@@ -80,12 +84,10 @@ if (!stripeReady) {
   console.log(
     "⚠️ Omitiendo checkout Stripe (`checks.stripe` ≠ configured en /health)."
   );
-  console.log("\n🎉 Tests críticos pasaron (core OK; Stripe no configurado)\n");
+  console.log("\n🎉 Tests de integración pasaron (core OK; Stripe no configurado)\n");
   process.exit(0);
 }
 
-// Test 4: Checkout de pago (respuesta real: { url, sessionId, multaId, ... }, sin wrapper success/data)
-// Requiere STRIPE_SECRET_KEY en el servidor y en este proceso si usás Stripe real.
 const checkout = await fetch(`${API}/multa/${multaId}/discharge-checkout`, {
   method: "POST",
   headers: {
@@ -100,4 +102,4 @@ assert(
 );
 console.log("✅ Flujo de pago funciona");
 
-console.log("\n🎉 TODOS LOS TESTS CRÍTICOS PASARON\n");
+console.log("\n🎉 TODOS LOS TESTS DE INTEGRACIÓN PASARON\n");

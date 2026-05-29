@@ -2,6 +2,8 @@ import {
   PLAN_KEYS,
   PLAN_LIMITS,
   PLAN_METADATA,
+  PLAN_PRICING,
+  PLAN_FEATURES,
   FEATURE_FLAGS_BY_TIER,
   getStripePriceIdForTier,
 } from "./plan.config.js";
@@ -37,6 +39,11 @@ export function mergeEffectiveFeatureFlags(tenant) {
 
 export function listPublicPlans() {
   return PLAN_KEYS.map((key) => ({
+    id: key,
+    name: PLAN_METADATA[key]?.label ?? key,
+    priceUsd: PLAN_PRICING[key]?.priceUsd ?? 0,
+    dailyQuota: PLAN_LIMITS[key]?.dailyAnalyzeLimit ?? null,
+    features: PLAN_FEATURES[key] ?? [],
     key,
     ...(PLAN_METADATA[key] || {}),
     limits: PLAN_LIMITS[key],

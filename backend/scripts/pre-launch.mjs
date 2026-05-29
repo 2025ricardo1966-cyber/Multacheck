@@ -57,7 +57,47 @@ const checks = [
   [
     "✅ Stripe configurado",
     async () => {
-      if (!process.env.STRIPE_SECRET_KEY?.trim()) throw new Error("Missing");
+      if (!process.env.STRIPE_SECRET_KEY?.trim()) throw new Error("Missing STRIPE_SECRET_KEY");
+      if (!process.env.STRIPE_WEBHOOK_SECRET?.trim()) {
+        throw new Error("Missing STRIPE_WEBHOOK_SECRET");
+      }
+    },
+  ],
+
+  [
+    "✅ APP_MODE production (checkout habilitado)",
+    async () => {
+      const mode = process.env.APP_MODE?.trim().toLowerCase() || "production";
+      if (mode !== "production") {
+        throw new Error(`APP_MODE=${mode} — checkout/report deshabilitados`);
+      }
+    },
+  ],
+
+  [
+    "✅ FRONTEND_URL configurado",
+    async () => {
+      if (!process.env.FRONTEND_URL?.trim()) {
+        throw new Error("Missing FRONTEND_URL (CORS + redirects Stripe)");
+      }
+    },
+  ],
+
+  [
+    "✅ Migraciones Prisma aplicadas",
+    async () => {
+      const { execSync } = await import("node:child_process");
+      const out = execSync("npx prisma migrate status", {
+        cwd: backendRoot,
+        encoding: "utf8",
+        env: process.env,
+      });
+      if (/Following migration have not yet been applied/i.test(out)) {
+        throw new Error("Pending migrations — run npm run db:migrate");
+      }
+      if (/failed migrations/i.test(out)) {
+        throw new Error("Failed migrations in DB — resolve before deploy");
+      }
     },
   ],
 

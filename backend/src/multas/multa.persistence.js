@@ -7,6 +7,7 @@ import { buildDischargeText } from "./dischargetemplate.js";
 import { multaFlowLog } from "./multa.debuglog.js";
 import { CaseState, normalizeCaseState } from "./multaCaseState.js";
 import { getStripe } from "../billing/stripe.service.js";
+import { incrementAnalyzeUsageForTenant } from "../usage/usage.service.js";
 
 /**
  * =========================================================
@@ -61,7 +62,7 @@ async function resolveAnalyzeInTransaction(tx, body, options, tenantId, userId, 
           where: { idempotencyKey, tenantId, userId },
         });
         if (byKey) {
-          return { success: true, data: byKey };
+          return { success: true, data: byKey, usageIncrement: false };
         }
       }
 
@@ -82,7 +83,7 @@ async function resolveAnalyzeInTransaction(tx, body, options, tenantId, userId, 
           where: { id: existingByCompound.id },
           data: { updatedAt: new Date() },
         });
-        return { success: true, data: touched };
+        return { success: true, data: touched, usageIncrement: false };
       }
 
       try {
@@ -94,7 +95,7 @@ async function resolveAnalyzeInTransaction(tx, body, options, tenantId, userId, 
             idempotencyKey,
           }),
         });
-        return { success: true, data: created };
+        return { success: true, data: created, usageIncrement: true };
       } catch (err) {
         if (err?.code === "P2002") {
           if (idempotencyKey) {
@@ -102,7 +103,7 @@ async function resolveAnalyzeInTransaction(tx, body, options, tenantId, userId, 
               where: { idempotencyKey, tenantId, userId },
             });
             if (recoveredByKey) {
-              return { success: true, data: recoveredByKey };
+              return { success: true, data: recoveredByKey, usageIncrement: false };
             }
           }
           const recovered = await tx.multa.findUnique({
@@ -113,7 +114,7 @@ async function resolveAnalyzeInTransaction(tx, body, options, tenantId, userId, 
               where: { id: recovered.id },
               data: { updatedAt: new Date() },
             });
-            return { success: true, data: touched };
+            return { success: true, data: touched, usageIncrement: false };
           }
         }
         throw err;
@@ -135,7 +136,7 @@ export async function analyzeAndPersist(auth, body, options = {}) {
   const lockKey = `analyze:${tenantId}:${userId}:${requestHash}`;
 
   return runWithConcurrencyLock(lockKey, async () => {
-    return safeTransaction(
+    const result = await safeTransaction(
       async (tx) =>
         resolveAnalyzeInTransaction(tx, body, options, tenantId, userId, requestHash),
       {
@@ -143,6 +144,12 @@ export async function analyzeAndPersist(auth, body, options = {}) {
         timeout: 60_000,
       }
     );
+
+    if (result?.success && result.usageIncrement) {
+      await incrementAnalyzeUsageForTenant(tenantId);
+    }
+
+    return result;
   });
 }
 

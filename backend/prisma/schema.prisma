@@ -134,3 +134,18 @@ model ProcessedStripeWebhookEvent {
 
   @@index([receivedAt])
 }
+
+/// Inbox durable: persiste el evento al recibir (antes del ACK) para sobrevivir reinicios.
+model StripeWebhookInbox {
+  id          String    @id
+  eventType   String
+  payload     Json
+  status      String    @default("pending")
+  attempts    Int       @default(0)
+  lastError   String?
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+
+  @@index([status])
+  @@index([receivedAt])
+}

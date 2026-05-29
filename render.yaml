@@ -1,16 +1,57 @@
-# Blueprint opcional para Render — crear servicio Web desde el repo raíz.
+# Render Blueprint — MultaCheck API
 # Doc: https://render.com/docs/blueprint-spec
+#
+# Antes del primer deploy:
+#   1. Setear JWT_SECRET, STRIPE_* y FRONTEND_URL en el dashboard (sync: false).
+#   2. JWT_SECRET debe ser estable entre deploys (no regenerar).
+#   3. STRIPE_WEBHOOK_SECRET = whsec del endpoint live en Stripe Dashboard.
+#   4. FRONTEND_URL = URL HTTPS del frontend (CORS).
+#
+# VITE_API_URL va en Vercel/frontend, no en este servicio.
+
+databases:
+  - name: multacheck-db
+    plan: free
+    databaseName: multacheck
+    user: multacheck
+
 services:
   - type: web
-    name: multacheck-backend
+    name: multacheck-api
     runtime: node
     rootDir: backend
-    buildCommand: npm install
+    plan: free
+    buildCommand: npm ci && npm run build && npm run db:migrate
     startCommand: npm start
+    healthCheckPath: /api/health
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: NODE_VERSION
         value: "20"
-      - key: PORT
+      - key: DATABASE_URL
+        fromDatabase:
+          name: multacheck-db
+          property: connectionString
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
         sync: false
       - key: FRONTEND_URL
         sync: false
+      - key: APP_MODE
+        value: production
+      - key: FEATURE_ENABLE_CHECKOUT
+        value: "true"
+      - key: FEATURE_ENABLE_REPORT_GENERATION
+        value: "true"
+      - key: LOG_LEVEL
+        value: info
+      - key: AI_PROVIDER
+        value: javascript

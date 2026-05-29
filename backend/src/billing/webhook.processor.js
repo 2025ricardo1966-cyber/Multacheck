@@ -12,8 +12,10 @@ import { CaseState } from "../multas/multaCaseState.js";
 import prisma from "../db/prisma.js";
 import { logPayment } from "../config/logger.js";
 import {
-  createProcessedWebhookEvent,
+  claimWebhookInboxForProcessing,
   findProcessedWebhookEvent,
+  markWebhookInboxFailed,
+  markWebhookInboxProcessed,
 } from "./webhook.persistence.js";
 
 /** Errores que la cola puede reintentar (DB temporal, finalize, feature flag). */
@@ -25,25 +27,10 @@ export class StripeWebhookRetryError extends Error {
   }
 }
 
-/**
- * Procesa un evento Stripe ya verificado (firma OK).
- * `payload`: { id, type, data } compatible con Stripe.Event parcial.
- */
-export async function processStripeWebhookJob(payload) {
-  const event = payload;
+async function processWebhookEventBody(event) {
   const stripe = getStripe();
   if (!stripe) {
     throw new StripeWebhookRetryError("Stripe client unavailable");
-  }
-
-  const alreadyProcessed = await findProcessedWebhookEvent(event.id);
-  if (alreadyProcessed) {
-    multaFlowLog("STRIPE_WEBHOOK_DUPLICATE_DELIVERY", {
-      stripeEventId: event.id,
-      type: event.type,
-      phase: "async_processor",
-    });
-    return { duplicate: true };
   }
 
   switch (event.type) {
@@ -155,7 +142,7 @@ export async function processStripeWebhookJob(payload) {
       break;
   }
 
-  const md = event.data.object.metadata || {};
+  const md = event.data.object?.metadata || {};
   const webhookTenantId =
     md.tenantId && typeof md.tenantId === "string" ? md.tenantId : null;
 
@@ -165,20 +152,53 @@ export async function processStripeWebhookJob(payload) {
     action: AuditAction.BILLING_WEBHOOK_PROCESSED,
     metadata: { type: event.type, id: event.id },
   });
+}
 
-  try {
-    await createProcessedWebhookEvent(event.id, event.type);
-  } catch (e) {
-    if (e?.code !== "P2002") {
-      throw e;
-    }
+/**
+ * Procesa un evento Stripe ya verificado (firma OK) con idempotencia en DB.
+ * `payload`: { id, type, data } compatible con Stripe.Event parcial.
+ */
+export async function processStripeWebhookJob(payload) {
+  const event = payload;
+
+  const alreadyProcessed = await findProcessedWebhookEvent(event.id);
+  if (alreadyProcessed) {
     multaFlowLog("STRIPE_WEBHOOK_DUPLICATE_DELIVERY", {
       stripeEventId: event.id,
-      note: "create_race",
+      type: event.type,
+      phase: "processed_marker",
+    });
+    return { duplicate: true, cached: true };
+  }
+
+  const claim = await claimWebhookInboxForProcessing(event.id);
+  if (claim.kind === "already_processed") {
+    return { duplicate: true, cached: true };
+  }
+  if (claim.kind === "in_flight") {
+    multaFlowLog("STRIPE_WEBHOOK_DUPLICATE_DELIVERY", {
+      stripeEventId: event.id,
+      phase: "in_flight",
+    });
+    return { duplicate: true, cached: true };
+  }
+  if (claim.kind === "missing") {
+    multaFlowLog("STRIPE_WEBHOOK_INBOX_MISSING", {
+      stripeEventId: event.id,
+      type: event.type,
     });
   }
 
-  return { ok: true };
+  try {
+    await processWebhookEventBody(event);
+    await markWebhookInboxProcessed(event.id);
+    return { ok: true, cached: false };
+  } catch (error) {
+    if (event?.id) {
+      await markWebhookInboxFailed(event.id, error?.message).catch(() => {});
+    }
+    throw error;
+  }
 }
 
 export function recordWebhookJobDeadLetter(event, error) {

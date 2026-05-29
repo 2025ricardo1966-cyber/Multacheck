@@ -1,7 +1,10 @@
 import Stripe from "stripe";
 import { getStripe } from "./stripe.service.js";
 import { logger, logError } from "../config/logger.js";
-import { findProcessedWebhookEvent } from "./webhook.persistence.js";
+import {
+  findProcessedWebhookEvent,
+  persistWebhookInboxFromStripeEvent,
+} from "./webhook.persistence.js";
 import { webhookQueue } from "./webhookQueue.js";
 
 export async function handleStripeWebhook(req, res) {
@@ -80,17 +83,32 @@ export async function handleStripeWebhook(req, res) {
       return res.json({ received: true, duplicate: true });
     }
 
+    const persisted = await persistWebhookInboxFromStripeEvent(event);
+    if (persisted.duplicate) {
+      logger.info(
+        {
+          context: "stripe_webhook",
+          phase: "duplicate_inbox",
+          stripeEventId: event.id,
+          type: event.type,
+        },
+        "stripe_webhook_inbox_duplicate"
+      );
+      return res.json({ received: true, duplicate: true });
+    }
+
     logger.info(
       {
         context: "stripe_webhook",
         phase: "ack",
         stripeEventId: event.id,
         type: event.type,
+        inboxCreated: persisted.created,
       },
       "stripe_webhook_ack"
     );
 
-    /** ACK rápido a Stripe; el trabajo pesado va en cola (reintentos internos). */
+    /** ACK a Stripe; el payload ya está en DB (StripeWebhookInbox). */
     res.status(200).json({ received: true });
     setImmediate(() => {
       try {

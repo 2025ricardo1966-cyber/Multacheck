@@ -193,14 +193,14 @@ async function main() {
   console.log("    ✅ Sin imports prohibidos hacia /infra/\n");
 
   if (integration) {
-    console.log("[deploy-gate] ② Integration tier — test:critical (requiere API, ej. CRITICAL_TEST_API) …");
+    console.log("[deploy-gate] ② Integration tier — test:integration (requiere API, ej. CRITICAL_TEST_API) …");
     try {
-      await runNpm("test:critical");
-      console.log("    ✅ test:critical OK\n");
+      await runNpm("test:integration");
+      console.log("    ✅ test:integration OK\n");
     } catch (e) {
       console.error(e?.message ?? e);
       if (e?.stderr) console.error(String(e.stderr));
-      console.error("\n[deploy-gate] DENY: test:critical falló (¿servidor arriba?)");
+      console.error("\n[deploy-gate] DENY: test:integration falló (¿servidor arriba?)");
       process.exit(1);
     }
   } else {

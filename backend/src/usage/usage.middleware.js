@@ -40,12 +40,12 @@ export async function checkFreePlanAnalyzeLimits(req, res, next) {
   }
 }
 
+/**
+ * Cuota diaria por plan (solo requests autenticados con tenant resuelto).
+ * Los anónimos no pasan por aquí.
+ */
 export async function checkAnalyzeQuota(req, res, next) {
   try {
-    if (req.membership.role === "admin") {
-      return next();
-    }
-
     const tenant = req.tenant;
     if (!tenant?.id) {
       return res.status(500).json({ error: "Tenant no resuelto" });
@@ -80,3 +80,11 @@ export async function checkAnalyzeQuota(req, res, next) {
 
 /** Alias para políticas SaaS (cuota por tenant según plan). */
 export const checkPlanLimits = checkAnalyzeQuota;
+
+/** Cuota diaria por plan si hay JWT; anónimos siguen sin límite de tenant (solo rate limit). */
+export async function enforceAuthenticatedAnalyzeQuota(req, res, next) {
+  if (!req.auth) {
+    return next();
+  }
+  return checkAnalyzeQuota(req, res, next);
+}

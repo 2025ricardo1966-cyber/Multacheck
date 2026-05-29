@@ -88,7 +88,7 @@ async function safeDeploy() {
 
   console.log("2️⃣ Running tests...");
   try {
-    await runInBackend("npm run test:critical");
+    await runInBackend("npm run test:integration");
     console.log("✅ Tests passed\n");
   } catch (e) {
     console.error("❌ Tests failed, aborting deploy");

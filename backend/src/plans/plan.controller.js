@@ -1,5 +1,6 @@
 import * as planService from "./plan.service.js";
 
 export function listPlans(_req, res) {
-  res.json({ plans: planService.listPublicPlans() });
+  const plans = planService.listPublicPlans();
+  res.json({ success: true, data: plans, plans });
 }

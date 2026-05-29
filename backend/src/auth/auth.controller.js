@@ -5,7 +5,20 @@ import { AuditAction } from "../audit/audit.model.js";
 
 export async function register(req, res) {
   try {
-    const { token, user } = await authService.register(req.body);
+    const { email, password, companyName, companySlug } = req.body ?? {};
+    if (!companyName?.trim()) {
+      return res.status(400).json({ error: "companyName is required" });
+    }
+    if (!email?.trim() || !password) {
+      return res.status(400).json({ error: "Missing credentials" });
+    }
+
+    const { token, user } = await authService.register({
+      email,
+      password,
+      companyName,
+      companySlug,
+    });
     await logAudit({
       tenantId: user.tenantId,
       userId: user.id,

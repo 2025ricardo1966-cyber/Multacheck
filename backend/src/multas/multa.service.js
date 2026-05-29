@@ -11,6 +11,7 @@ import {
 } from "./multaCaseState.js";
 import { normalizeAnalyzeInput } from "./infractionNormalization.js";
 import { publishDomainEvent } from "../application/domainEvents.port.js";
+import { isFeatureCheckoutEnabled } from "../config/launchflags.js";
 
 /**
  * Contrato mínimo de estado en TODAS las respuestas multa (siempre incluido).
@@ -21,7 +22,9 @@ export function toCaseStateOnlyResponse(multa) {
   return {
     multaId: multa.id,
     caseState: cs,
-    dischargeAvailable: dischargeAvailableFromCaseState(cs),
+    dischargeAvailable:
+      isFeatureCheckoutEnabled() &&
+      dischargeAvailableFromCaseState(cs),
   };
 }
 
@@ -266,6 +269,10 @@ export async function createMultaFlow(auth, body, options = {}) {
 }
 
 export async function createDischargeCheckoutFlow(auth, multaId, body = {}) {
+  if (!isFeatureCheckoutEnabled()) {
+    throw httpError("Checkout no disponible en este entorno", 503);
+  }
+
   const multa = await findOwnedMulta(auth, multaId);
   if (!multa) {
     throw httpError("Multa no encontrada", 404);
@@ -292,23 +299,31 @@ export async function createDischargeCheckoutFlow(auth, multaId, body = {}) {
 
   const priceData = stripeDischargePriceData();
   const checkoutLocale = stripeCheckoutSessionLocale();
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    line_items: [
-      {
-        price_data: priceData,
-        quantity: 1,
+  let session;
+  try {
+    session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      line_items: [
+        {
+          price_data: priceData,
+          quantity: 1,
+        },
+      ],
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      metadata: {
+        multaId: multa.id,
+        tenantId: auth.tenantId,
+        country: multa.country ?? "AR",
       },
-    ],
-    success_url: successUrl,
-    cancel_url: cancelUrl,
-    metadata: {
-      multaId: multa.id,
-      tenantId: auth.tenantId,
-      country: multa.country ?? "AR",
-    },
-    ...(checkoutLocale ? { locale: checkoutLocale } : {}),
-  });
+      ...(checkoutLocale ? { locale: checkoutLocale } : {}),
+    });
+  } catch (err) {
+    throw httpError(
+      "No se pudo iniciar el pago. Verificá Stripe o intentá más tarde.",
+      503
+    );
+  }
 
   await prisma.multa.update({
     where: { id: multa.id },

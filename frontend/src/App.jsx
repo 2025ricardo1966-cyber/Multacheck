@@ -32,6 +32,7 @@ import DescargoPage from "./pages/DescargoPage.jsx";
 import MultaResumePage from "./pages/MultaResumePage.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
+import PlansPage from "./pages/PlansPage.jsx";
 
 const APP_VERSION = "0.0.0";
 
@@ -1066,6 +1067,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/plans" element={<PlansPage />} />
       <Route
         path="/descargo/:multaId"
         element={

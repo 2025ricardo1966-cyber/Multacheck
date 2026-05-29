@@ -5,7 +5,13 @@ import {
 } from "./config/env.js";
 import { logger } from "./config/logger.js";
 import app from "./app.js";
+import { recoverPendingWebhooksFromDb } from "./billing/webhookQueue.js";
 import prisma from "./db/prisma.js";
+import {
+  getAppMode,
+  isFeatureCheckoutEnabled,
+  isFeatureReportGenerationEnabled,
+} from "./config/launchflags.js";
 
 process.on("unhandledRejection", (reason) => {
   try {
@@ -53,6 +59,37 @@ function assertEnv() {
 }
 
 assertEnv();
+
+function warnProductionConfig() {
+  const isProd = process.env.NODE_ENV === "production";
+  if (!isProd) return;
+
+  if (!process.env.FRONTEND_URL?.trim()) {
+    logger.warn(
+      { context: "boot", check: "FRONTEND_URL" },
+      "FRONTEND_URL unset in production — CORS will reject browser requests from the frontend"
+    );
+  }
+
+  if (getAppMode() !== "production") {
+    logger.warn(
+      { context: "boot", appMode: getAppMode() },
+      "APP_MODE is not production — checkout and report generation may be disabled"
+    );
+  }
+
+  logger.info(
+    {
+      context: "boot",
+      appMode: getAppMode(),
+      checkoutEnabled: isFeatureCheckoutEnabled(),
+      reportEnabled: isFeatureReportGenerationEnabled(),
+    },
+    "launch_flags"
+  );
+}
+
+warnProductionConfig();
 
 function logStripeBootDiagnostics() {
   try {
@@ -192,6 +229,16 @@ async function startListening() {
       );
 
       attachGracefulShutdown(server);
+
+      void recoverPendingWebhooksFromDb().catch((err) => {
+        logger.warn(
+          {
+            context: "stripe_webhook_recovery",
+            error: err?.message,
+          },
+          "stripe_webhook_inbox_recovery_failed"
+        );
+      });
 
       if (port !== REQUESTED_PORT) {
         console.warn(
