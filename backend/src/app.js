@@ -1,6 +1,8 @@
 /**
  * Express + helmet + CORS + Stripe webhook (raw body) antes de JSON + saneo NoSQL + rutas API.
  */
+import { expressErrorHandler } from "@sentry/node";
+import { isSentryEnabled } from "./instrument.js";
 import "./bootstrap/registerDomainPorts.js";
 import express from "express";
 import cors from "cors";
@@ -16,6 +18,7 @@ import {
 } from "./infra/securityGateway/rateLimiterGateway.js";
 import { createSecurityGatewayCoreMiddleware } from "./infra/securityGateway/securityGateway.middleware.js";
 import { createTelemetryMiddleware } from "./infra/telemetry/telemetryHttp.middleware.js";
+import { globalErrorHandler } from "./middleware/errorHandler.js";
 
 const createApplication =
   typeof express === "function" ? express : express?.default;
@@ -100,5 +103,11 @@ if (isSecurityGatewayEnabled()) {
 }
 
 app.use("/api", apiRoutes);
+
+if (isSentryEnabled()) {
+  app.use(expressErrorHandler());
+}
+
+app.use(globalErrorHandler);
 
 export default app;

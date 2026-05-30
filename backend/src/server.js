@@ -1,3 +1,4 @@
+import { Sentry, isSentryEnabled } from "./instrument.js";
 import {
   PORT as REQUESTED_PORT,
   multacheckAutoIncrementPortEnabled,
@@ -26,6 +27,9 @@ process.on("unhandledRejection", (reason) => {
       },
       "Unhandled promise rejection"
     );
+    if (isSentryEnabled() && reason instanceof Error) {
+      Sentry.captureException(reason, { tags: { context: "unhandledRejection" } });
+    }
   } catch {
     console.error("[MultaCheck] unhandledRejection:", reason);
   }
@@ -40,8 +44,15 @@ process.on("uncaughtException", (err) => {
       },
       err?.message ?? String(err)
     );
+    if (isSentryEnabled() && err instanceof Error) {
+      Sentry.captureException(err, { tags: { context: "uncaughtException" } });
+    }
   } catch {
     console.error("[MultaCheck] uncaughtException:", err);
+  }
+  if (isSentryEnabled()) {
+    void Sentry.close(2000).finally(() => process.exit(1));
+    return;
   }
   process.exit(1);
 });

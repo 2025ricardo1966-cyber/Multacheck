@@ -10,7 +10,7 @@ import * as multaPersistence from "../multas/multa.persistence.js";
 import { multaFlowLog } from "../multas/multa.debuglog.js";
 import { CaseState } from "../multas/multaCaseState.js";
 import prisma from "../db/prisma.js";
-import { logPayment } from "../config/logger.js";
+import { logPayment, logger } from "../config/logger.js";
 import {
   claimWebhookInboxForProcessing,
   findProcessedWebhookEvent,
@@ -189,11 +189,34 @@ export async function processStripeWebhookJob(payload) {
     });
   }
 
+  const metadata = event.data?.object?.metadata;
+
   try {
     await processWebhookEventBody(event);
     await markWebhookInboxProcessed(event.id);
+    logger.info(
+      {
+        context: "webhook",
+        stripeEventId: event.id,
+        type: event.type,
+        multaId: metadata?.multaId ?? null,
+        status: "success",
+      },
+      "Webhook processed"
+    );
     return { ok: true, cached: false };
   } catch (error) {
+    logger.error(
+      {
+        context: "webhook",
+        stripeEventId: event.id,
+        type: event.type,
+        multaId: metadata?.multaId ?? null,
+        error: error?.message,
+        status: "failed",
+      },
+      "Webhook failed"
+    );
     if (event?.id) {
       await markWebhookInboxFailed(event.id, error?.message).catch(() => {});
     }

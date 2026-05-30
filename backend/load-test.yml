@@ -1,0 +1,83 @@
+# Load test MultaCheck API
+#
+# Uso:
+#   artillery run backend/load-test.yml
+#   artillery run backend/load-test.yml -e local
+#   artillery run backend/load-test.yml -e production
+#
+# Nota: authLimiter = 5 req / 15 min / IP; analyzeLimiter = 10 / hora / usuario.
+# "Full Flow" contra un solo IP devolverá muchos 429 — eso es esperado (protección activa).
+# Para medir capacidad del servidor sin rate limits, corré el escenario "Health only".
+
+config:
+  environments:
+    local:
+      target: "http://127.0.0.1:3000"
+    production:
+      target: "https://multacheck-api.onrender.com"
+  target: "http://127.0.0.1:3000"
+  phases:
+    - duration: 60
+      arrivalRate: 10
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 50
+      name: "Ramp up"
+    - duration: 60
+      arrivalRate: 10
+      name: "Cool down"
+  defaults:
+    headers:
+      Content-Type: application/json
+  plugins:
+    expect: {}
+  ensure:
+    maxErrorRate: 100
+
+scenarios:
+  - name: "Health only"
+    weight: 20
+    flow:
+      - get:
+          url: "/api/health"
+          expect:
+            - statusCode: 200
+
+  - name: "Full Flow"
+    weight: 80
+    flow:
+      - post:
+          url: "/api/auth/register"
+          json:
+            email: "load-{{ $uuid }}@loadtest.com"
+            password: "LoadTest123!@"
+            companyName: "Load Test Co"
+            companySlug: "load-{{ $uuid }}"
+          capture:
+            - json: "$.token"
+              as: "token"
+          expect:
+            - statusCode:
+                - 201
+                - 429
+                - 400
+      - think: 2
+      - post:
+          url: "/api/multa/analyze"
+          ifTrue: "token"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            country: "AR"
+            type: "estacionamiento"
+            description: "Multa load test estacionamiento indebido"
+          expect:
+            - statusCode:
+                - 200
+                - 401
+                - 429
+      - think: 1
+      - get:
+          url: "/api/health"
+          expect:
+            - statusCode: 200

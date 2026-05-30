@@ -1,0 +1,32 @@
+# Capacidad infra: 100 req/s solo en /api/health (sin rate limits de auth).
+# Uso: npx artillery run backend/load-test-health.yml -e local
+
+config:
+  environments:
+    local:
+      target: "http://127.0.0.1:3000"
+    production:
+      target: "https://multacheck-api.onrender.com"
+  target: "http://127.0.0.1:3000"
+  phases:
+    - duration: 30
+      arrivalRate: 20
+      name: "Warm up"
+    - duration: 60
+      arrivalRate: 100
+      name: "100 users/sec spike"
+    - duration: 30
+      arrivalRate: 20
+      name: "Cool down"
+  plugins:
+    expect: {}
+  ensure:
+    maxErrorRate: 5
+
+scenarios:
+  - name: "Health spike"
+    flow:
+      - get:
+          url: "/api/health"
+          expect:
+            - statusCode: 200
